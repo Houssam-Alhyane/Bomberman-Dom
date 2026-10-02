@@ -1,25 +1,28 @@
-const GameState = require('./state');
-
 class Room {
-  constructor(id) {
-    this.id = id;
-    this.state = new GameState();
+  constructor() {
+    this.players = [];
+    this.maxPlayers = 4;
   }
 
-  addPlayer(playerId) {
-    this.state.addPlayer(playerId);
+  addPlayer(player) {
+    if (this.players.length >= this.maxPlayers) {
+      return false;
+    }
+
+    this.players.push(player);
+    return true;
   }
 
   removePlayer(playerId) {
-    this.state.removePlayer(playerId);
+    this.players = this.players.filter((player) => player.id !== playerId);
   }
 
-  getPlayers() {
-    return this.state.getPlayers();
+  getPlayerCount() {
+    return this.players.length;
   }
 
-  getPlayer(playerId) {
-    return this.state.getPlayer(playerId);
+  isFull() {
+    return this.players.length >= this.maxPlayers;
   }
 }
 
