@@ -8,7 +8,7 @@ const server = http.createServer();
 const wss = new WebSocket.Server({ server });
 
 wss.on('connection', (socket) => {
-  handleConnection(socket);
+  handleConnection(socket, wss);
 });
 
 server.listen(8080, () => {
