@@ -1,18 +1,45 @@
+const Room = require("../game/room");
+
+const room = new Room();
+
+let nextPlayerId = 1;
+
 function handleConnection(socket) {
-  console.log('Client connected');
+    const player = {
+        id: nextPlayerId
+    };
 
-  socket.send(
-    JSON.stringify({
-      type: 'connected',
-      message: 'Welcome to Bomberman server',
-    }),
-  );
+    nextPlayerId++;
 
-  socket.on('close', () => {
-    console.log('Client disconnected');
-  });
+    const added = room.addPlayer(player);
+
+    if (!added) {
+        socket.send(JSON.stringify({
+            type: "error",
+            message: "Room is full"
+        }));
+
+        socket.close();
+        return;
+    }
+
+    console.log(`Player ${player.id} connected`);
+    console.log(`Players: ${room.getPlayerCount()}/4`);
+
+    socket.send(JSON.stringify({
+        type: "connected",
+        playerId: player.id,
+        players: room.getPlayerCount()
+    }));
+
+    socket.on("close", () => {
+        room.removePlayer(player.id);
+
+        console.log(`Player ${player.id} disconnected`);
+        console.log(`Players: ${room.getPlayerCount()}/4`);
+    });
 }
 
 module.exports = {
-  handleConnection,
+    handleConnection
 };
