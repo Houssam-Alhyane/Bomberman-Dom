@@ -1,13 +1,18 @@
-function joinLobby(room, player, nickname) {
-  if (!nickname || nickname.trim() === '') {
+function joinLobby(players, player, nickname) {
+  if (typeof nickname !== 'string' || nickname.trim() === '') {
     return {
       success: false,
       message: 'Nickname is required',
     };
   }
 
-  const nicknameExists = room.players.some(
-    (player) => player.nickname === nickname,
+  const cleanNickname = nickname.trim();
+
+  const nicknameExists = players.some(
+    (other) =>
+      other.id !== player.id &&
+      other.nickname &&
+      other.nickname.toLowerCase() === cleanNickname.toLowerCase(),
   );
 
   if (nicknameExists) {
@@ -17,11 +22,9 @@ function joinLobby(room, player, nickname) {
     };
   }
 
-  player.nickname = nickname;
-
   return {
     success: true,
-    playerCount: room.getPlayerCount(),
+    nickname: cleanNickname,
   };
 }
 
