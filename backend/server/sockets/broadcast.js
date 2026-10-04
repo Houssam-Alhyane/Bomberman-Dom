@@ -14,7 +14,15 @@ function broadcast(wss, message) {
   });
 }
 
+//broadcast message to every player of a single room one-to-many
+function broadcastToRoom(room, message) {
+  room.players.forEach((player) => {
+    send(player.socket, message);
+  });
+}
+
 module.exports = {
   send,
   broadcast,
+  broadcastToRoom,
 };
