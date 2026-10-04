@@ -44,3 +44,19 @@ function isAlreadyInRoom(socket, player) {
   send(socket, { type: 'error', message: 'You are already in a room' });
   return true;
 }
+
+function createRoom(socket, wss, player, roomManager) {
+  if (isAlreadyInRoom(socket, player)) {
+    return;
+  }
+
+  const room = roomManager.createRoom();
+
+  room.addPlayer(player);
+  player.roomId = room.id;
+
+  //the creator is the only member of a new room, so room_joined is enough for them
+  send(socket, getRoomJoined(room, true));
+
+  broadcastRooms(wss, roomManager);
+}
