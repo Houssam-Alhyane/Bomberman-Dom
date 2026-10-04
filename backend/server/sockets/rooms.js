@@ -32,6 +32,7 @@ function broadcastRoomState(room) {
     type: 'room_state',
     room: room.getPublicInfo(),
     players: getRoomPlayers(room),
+    gameState: room.getState(),
   });
 }
 
@@ -59,4 +60,32 @@ function createRoom(socket, wss, player, roomManager) {
   send(socket, getRoomJoined(room, true));
 
   broadcastRooms(wss, roomManager);
+}
+
+function joinRoom(socket, wss, player, roomManager, roomId) {
+  if (isAlreadyInRoom(socket, player)) {
+    return;
+  }
+
+  const room = roomManager.getRoom(roomId);
+
+  if (!room) {
+    send(socket, { type: 'error', message: 'Room not found' });
+    return;
+  }
+
+  if (room.isFull()) {
+    send(socket, { type: 'error', message: `${room.name} is full` });
+    return;
+  }
+
+  room.addPlayer(player);
+  player.roomId = room.id;
+
+  console.log(`${player.nickname} joined ${room.name}`);
+
+  send(socket, getRoomJoined(room, false));
+
+  broadcastRooms(wss, roomManager);
+  broadcastRoomState(room);
 }
