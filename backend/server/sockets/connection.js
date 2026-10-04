@@ -1,45 +1,70 @@
-const Room = require("../game/room");
+const RoomManager = require('../game/roomManager');
+const { joinLobby } = require('./lobby');
+const { send } = require('./broadcast');
+const {
+  createRoom,
+  joinRoom,
+  leaveRoom,
+  removeFromRoom,
+  broadcastRooms,
+} = require('./rooms');
 
-const room = new Room();
+const roomManager = new RoomManager();
 
 let nextPlayerId = 1;
+const players = new Map();
 
-function handleConnection(socket) {
-    const player = {
-        id: nextPlayerId
-    };
+function requireNickname(socket, player) {
+  if (player.nickname) {
+    return true;
+  }
 
-    nextPlayerId++;
+  send(socket, {
+    type: 'error',
+    message: 'Set a nickname first',
+  });
 
-    const added = room.addPlayer(player);
-
-    if (!added) {
-        socket.send(JSON.stringify({
-            type: "error",
-            message: "Room is full"
-        }));
-
-        socket.close();
-        return;
-    }
-
-    console.log(`Player ${player.id} connected`);
-    console.log(`Players: ${room.getPlayerCount()}/4`);
-
-    socket.send(JSON.stringify({
-        type: "connected",
-        playerId: player.id,
-        players: room.getPlayerCount()
-    }));
-
-    socket.on("close", () => {
-        room.removePlayer(player.id);
-
-        console.log(`Player ${player.id} disconnected`);
-        console.log(`Players: ${room.getPlayerCount()}/4`);
-    });
+  return false;
 }
 
-module.exports = {
-    handleConnection
-};
+function handleMessage(socket, wss, player, msg) {
+  switch (msg.type) {
+    case 'join': {
+      const result = joinLobby(
+        Array.from(players.values()),
+        player,
+        msg.nickname,
+      );
+
+      if (!result.success) {
+        send(socket, { type: 'error', message: result.message });
+        return;
+      }
+
+      player.nickname = result.nickname;
+
+      console.log(`${player.nickname} joined the lobby`);
+
+      send(socket, {
+        type: 'joined',
+        playerId: player.id,
+        nickname: player.nickname,
+      });
+      return;
+    }
+
+    case 'create_room':
+      if (!requireNickname(socket, player)) return;
+      createRoom(socket, wss, player, roomManager);
+      return;
+
+    case 'join_room':
+      if (!requireNickname(socket, player)) return;
+      joinRoom(socket, wss, player, roomManager, msg.roomId);
+      return;
+
+    case 'leave_room':
+      leaveRoom(socket, wss, player, roomManager);
+      return;
+  }
+}
