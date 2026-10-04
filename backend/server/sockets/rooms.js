@@ -53,6 +53,8 @@ function createRoom(socket, wss, player, roomManager) {
 
   const room = roomManager.createRoom();
 
+
+
   room.addPlayer(player);
   player.roomId = room.id;
 
@@ -89,3 +91,44 @@ function joinRoom(socket, wss, player, roomManager, roomId) {
   broadcastRooms(wss, roomManager);
   broadcastRoomState(room);
 }
+
+//drop the player from his room, destroy the room when nobody is left in it
+//returns the name of the room he was in, or null when he was not in one
+function removeFromRoom(wss, player, roomManager) {
+  const room = player.roomId ? roomManager.getRoom(player.roomId) : null;
+
+  player.roomId = null;
+
+  if (!room) {
+    return null;
+  }
+
+  const roomName = room.name;
+
+  room.removePlayer(player.id);
+
+  if (room.isEmpty()) {
+    roomManager.removeRoom(room.id);
+    console.log(`${roomName} removed - no players left`);
+  } else {
+    broadcastRoomState(room);
+  }
+
+  broadcastRooms(wss, roomManager);
+
+  return roomName;
+}
+
+//send a message to the player that he has left the room successfully, and remove him from the room
+function leaveRoom(socket, wss, player, roomManager) {
+  removeFromRoom(wss, player, roomManager);
+  send(socket, { type: 'left_room' });
+}
+module.exports = {
+  createRoom,
+  joinRoom,
+  leaveRoom,
+  removeFromRoom,
+  broadcastRooms,
+  broadcastRoomState,
+};
