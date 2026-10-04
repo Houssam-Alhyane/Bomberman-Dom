@@ -13,6 +13,12 @@ class Room {
     return host ? host.nickname : null;
   }
 
+  //take id of the first player in the players array and return it as the hostId
+  get hostId() {
+    const host = this.players[0];
+    return host ? host.id : null;
+  }
+
   addPlayer(player) {
     if (this.isFull()) {
       return false;
@@ -49,6 +55,7 @@ class Room {
     return {
       id: this.id,
       name: this.name,
+      hostId: this.hostId,
       hostNickname: this.hostNickname,
       players: this.getPlayerCount(),
       maxPlayers: this.maxPlayers,
