@@ -1,6 +1,7 @@
 const RoomManager = require('../game/roomManager');
 const { joinLobby } = require('./lobby');
 const { send } = require('./broadcast');
+const { chat } = require('./chat');
 const {
   createRoom,
   joinRoom,
@@ -68,6 +69,10 @@ function handleMessage(socket, wss, player, msg) {
 
     case 'leave_room':
       leaveRoom(socket, wss, player, roomManager);
+      return;
+
+    case 'chat':
+      chat(socket, player, roomManager, msg.message);
       return;
   }
 }
