@@ -68,3 +68,54 @@ function handleMessage(socket, wss, player, msg) {
       return;
   }
 }
+
+function handleConnection(socket, wss) {
+  const player = {
+    id: nextPlayerId,
+    nickname: null,
+    roomId: null,
+    socket,
+  };
+
+  nextPlayerId++;
+  players.set(player.id, player);
+
+  socket.on('message', (data) => {
+    let msg;
+
+    try {
+      msg = JSON.parse(data.toString());
+    } catch (e) {
+      send(socket, {
+        type: 'error',
+        message: 'Invalid message',
+      });
+      return;
+    }
+
+    handleMessage(socket, wss, player, msg);
+  });
+
+  console.log(`Player ${player.id} connected`);
+
+  send(socket, {
+    type: 'connected',
+    playerId: player.id,
+  });
+
+  broadcastRooms(wss, roomManager);
+
+  socket.on('close', () => {
+    players.delete(player.id);
+
+    console.log(
+      `${player.nickname || `Player ${player.id}`} disconnected`,
+    );
+
+    removeFromRoom(wss, player, roomManager);
+  });
+}
+
+module.exports = {
+  handleConnection,
+};
