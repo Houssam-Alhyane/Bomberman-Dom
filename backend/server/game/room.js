@@ -32,9 +32,14 @@ class Room {
     return host ? host.nickname : null;
   }
 
-  // nobody can join a running game or a full room
+  // join is only open while we wait for players: 'waiting' and the 20s
+  // 'waitCountdown'. locked during 'startCountdown' (10s) and 'playing'
   canJoin() {
-    return this.state !== 'playing' && !this.isFull();
+    if (this.isFull()) {
+      return false;
+    }
+
+    return this.state === 'waiting' || this.state === 'waitCountdown';
   }
 
   addPlayer(player) {
