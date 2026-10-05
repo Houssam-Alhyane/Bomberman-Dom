@@ -53,13 +53,13 @@ function createRoom(socket, wss, player, roomManager) {
 
   const room = roomManager.createRoom();
 
-  //broadcast every timer/state change (readying -> starting -> playing, cancel, ...)
+  //broadcast every timer/state change
   room.onStateChange = () => broadcastRoomState(room);
 
-  //countdown reached 0: tell every player the game starts
+  //broadcast the start of the game to all players in the room
   room.onGameStart = () => {
     broadcastToRoom(room, { type: 'start', players: getRoomPlayers(room) });
-    //Person 4: create the game here
+   
   };
 
   room.addPlayer(player);
