@@ -53,7 +53,14 @@ function createRoom(socket, wss, player, roomManager) {
 
   const room = roomManager.createRoom();
 
+  //broadcast every timer/state change (readying -> starting -> playing, cancel, ...)
+  room.onStateChange = () => broadcastRoomState(room);
 
+  //countdown reached 0: tell every player the game starts
+  room.onGameStart = () => {
+    broadcastToRoom(room, { type: 'start', players: getRoomPlayers(room) });
+    //Person 4: create the game here
+  };
 
   room.addPlayer(player);
   player.roomId = room.id;
@@ -76,20 +83,27 @@ function joinRoom(socket, wss, player, roomManager, roomId) {
     return;
   }
 
-  if (room.isFull()) {
-    send(socket, { type: 'error', message: `${room.name} is full` });
+  if (!room.canJoin()) {
+    send(socket, {
+      type: 'error',
+      message: room.isFull() ? `${room.name} is full` : 'Game already started',
+    });
     return;
   }
 
-  room.addPlayer(player);
+  if (!room.addPlayer(player)) {
+    send(socket, { type: 'error', message: 'Could not join the room' });
+    return;
+  }
+
   player.roomId = room.id;
 
   console.log(`${player.nickname} joined ${room.name}`);
 
   send(socket, getRoomJoined(room, false));
+  broadcastRoomState(room); //everyone gets the new player list
 
   broadcastRooms(wss, roomManager);
-  broadcastRoomState(room);
 }
 
 //drop the player from his room, destroy the room when nobody is left in it
@@ -124,11 +138,11 @@ function leaveRoom(socket, wss, player, roomManager) {
   removeFromRoom(wss, player, roomManager);
   send(socket, { type: 'left_room' });
 }
+
 module.exports = {
   createRoom,
   joinRoom,
   leaveRoom,
   removeFromRoom,
   broadcastRooms,
-  broadcastRoomState,
 };

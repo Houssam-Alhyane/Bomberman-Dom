@@ -6,6 +6,8 @@ const READY_TIMER_DURATION = 10 * 1000; // 10 seconds
 // states: waiting -> waitCountdown (20s) -> startCountdown (10s) -> playing
 class Room {
   constructor() {
+    this.id = null;
+    this.name = null;
     this.players = [];
     this.maxPlayers = MAX_PLAYERS;
     this.state = 'waiting';
@@ -100,6 +102,9 @@ class Room {
 
   // call this when the game is over: removes everybody and resets
   endGame() {
+    this.players.forEach((p) => {
+      p.roomId = null;
+    });
     this.players = [];
     this.reset();
   }
@@ -170,7 +175,7 @@ class Room {
     this.emitStateChange();
 
     if (this.onGameStart) {
-      this.onGameStart(this);
+      this.onGameStart();
     }
   }
 
