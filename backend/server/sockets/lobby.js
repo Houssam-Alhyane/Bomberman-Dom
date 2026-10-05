@@ -21,7 +21,12 @@ function joinLobby(players, player, nickname) {
       message: 'Nickname already exists',
     };
   }
-
+  if (cleanNickname.length > 20 || cleanNickname.length < 3) {
+    return {
+      success: false,
+      message: 'Nickname must be between 3 and 20 characters',
+    };
+  }
   return {
     success: true,
     nickname: cleanNickname,
