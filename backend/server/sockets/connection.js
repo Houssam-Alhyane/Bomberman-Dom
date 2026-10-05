@@ -30,6 +30,9 @@ function requireNickname(socket, player) {
 function handleMessage(socket, wss, player, msg) {
   switch (msg.type) {
     case 'join': {
+      // the nickname is set once, a second join must not rename the player
+      if (player.nickname) return;
+
       const result = joinLobby(
         Array.from(players.values()),
         player,
@@ -86,6 +89,15 @@ function handleConnection(socket, wss) {
     try {
       msg = JSON.parse(data.toString());
     } catch (e) {
+      send(socket, {
+        type: 'error',
+        message: 'Invalid message',
+      });
+      return;
+    }
+
+    // JSON.parse gives back null for "null", any
+    if (!msg || typeof msg !== 'object') {
       send(socket, {
         type: 'error',
         message: 'Invalid message',
