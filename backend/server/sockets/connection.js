@@ -78,6 +78,12 @@ function handleMessage(socket, wss, player, msg) {
 }
 
 function handleConnection(socket, wss) {
+  //answered pings keep the heartbeat flag true, see heartbeat.js
+  socket.isAlive = true;
+  socket.on('pong', () => {
+    socket.isAlive = true;
+  });
+
   const player = {
     id: nextPlayerId,
     nickname: null,
