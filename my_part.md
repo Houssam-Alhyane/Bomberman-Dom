@@ -8,15 +8,19 @@ Create the Bomberman map.
 
 For example:
 
-W W W W W W W W W W W
-W P . B . W . B . P W
-W . W W . W . W W . W
-W B . . . . . . . B W
-W . W . W W W . W . W
-W B . . . . . . . B W
-W . W W . W . W W . W
-W P . B . W . B . P W
-W W W W W W W W W W W
+# # # # # # # # # # # # # # #
+# . . . . . . . . . . . . . #
+# . # . # . # . # . # . # . #
+# . . . . . . . . . . . . . #
+# . # . # . # . # . # . # . #
+# . . . . . . . . . . . . . #
+# . # . # . # . # . # . # . #
+# . . . . . . . . . . . . . #
+# . # . # . # . # . # . # . #
+# . . . . . . . . . . . . . #
+# . # . # . # . # . # . # . #
+# . . . . . . . . . . . . . #
+# # # # # # # # # # # # # # #
 
 Where:
 
@@ -24,6 +28,7 @@ W = permanent wall
 B = destructible block
 . = empty space
 P = player spawn
+
 2. Fixed walls
 
 Walls must always be in the same positions.
