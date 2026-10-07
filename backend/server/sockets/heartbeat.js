@@ -1,6 +1,6 @@
 
 const HEARTBEAT_INTERVAL = 9000;
-
+//send ping to all clients every 9 seconds,and in 9 seconds to send pong back to server
 function startHeartbeat(wss) {
   const interval = setInterval(() => {
     wss.clients.forEach((socket) => {
