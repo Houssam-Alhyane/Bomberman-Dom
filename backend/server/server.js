@@ -11,7 +11,7 @@ server.on('error', (err) => {
   process.exit(1);
 });
 
-const wss = new WebSocket.Server({ server });
+const wss = new WebSocket.Server({ server, maxPayload: 5 * 1024 * 1024 });
 
 wss.on('error', (err) => {
   console.error(`WebSocket server error: ${err.message}`);
