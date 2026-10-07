@@ -15,5 +15,15 @@ export class GameState {
         this.status = 'LOBBY'; 
     }
 
- 
+    updatePlayer(id, data) {
+        if (this.players.has(id)) {
+            const player = this.players.get(id);
+
+            Object.assign(player, data); 
+        } else {
+            this.players.set(id, data); 
+        }
+    }
+
+   
 }
