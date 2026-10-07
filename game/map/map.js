@@ -13,6 +13,7 @@
     # . . . . . . . . . . . . . #
     # # # # # # # # # # # # # # #
  */
+
 export class Map {
     constructor(width, height) {
         this.width = width;
@@ -82,6 +83,10 @@ export class Map {
         }
 
 
+    }
+
+     canMoveTo(x, y) {
+        // collision check here
     }
 
 }

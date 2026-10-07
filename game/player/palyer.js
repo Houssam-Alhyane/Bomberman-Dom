@@ -9,7 +9,11 @@ export class Player {
         this.speed = 1
     }
 
-    
-
+    movement(dx, dy, map) {
+        const newX = this.x + dx * this.speed
+        const newY = this.y + dy * this.speed
+        
+    }
 
 }
+
