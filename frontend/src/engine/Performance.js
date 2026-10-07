@@ -10,8 +10,9 @@ export class Performance {
         const now = performance.now();
         this.frames++;
         
+        // calculate deltaTime
         const delta = now - this.lastTime;
-        if (delta >= 1000) {
+        if (delta >= 1000) { 
             this.fps = (this.frames * 1000) / delta;
             
             if (this.fps < 58) { 
