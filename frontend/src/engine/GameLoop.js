@@ -9,4 +9,19 @@ export class GameLoop {
         this.isRunning = false;
         this.animationFrameId = null;
     }
+
+    start() {
+        if (this.isRunning) return;
+        this.isRunning = true;
+        this.lastTime = performance.now();
+
+        this.animationFrameId = requestAnimationFrame((time) => this.loop(time));
+    }
+
+    stop() {
+        this.isRunning = false;
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+        }
+    }
 }
