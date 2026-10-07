@@ -25,5 +25,7 @@ export class GameState {
         }
     }
 
-   
+    removePlayer(id) {
+        this.players.delete(id);
+    }
 }
