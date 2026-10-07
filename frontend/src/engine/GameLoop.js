@@ -24,4 +24,24 @@ export class GameLoop {
             cancelAnimationFrame(this.animationFrameId);
         }
     }
+    loop(currentTime) {
+        if (!this.isRunning) return;
+
+        // calcilate deltatime between current frame & old frame
+        let deltaTime = currentTime - this.lastTime;
+        this.lastTime = currentTime;
+        this.accumulator += deltaTime;
+
+        //update data game
+        while (this.accumulator >= this.step) {
+            this.update(this.step);
+            this.accumulator -= this.step;
+        }
+        // render the game
+        this.render();
+        // calculate performance
+        this.performance.measure();
+        // rendder next frame
+        this.animationFrameId = requestAnimationFrame((time) => this.loop(time));
+    }
 }
