@@ -84,6 +84,11 @@ function handleConnection(socket, wss) {
     socket.isAlive = true;
   });
 
+  socket.on('error', (err) => {
+    console.log(`Socket error for player: ${err.message}`);
+    socket.terminate();
+  });
+
   const player = {
     id: nextPlayerId,
     nickname: null,
