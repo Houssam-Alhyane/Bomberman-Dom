@@ -1,3 +1,5 @@
+import { Map } from "../map/map"
+
 export class Player {
     constructor(id, nickname, x, y) {
         this.id = id
@@ -12,6 +14,10 @@ export class Player {
     movement(dx, dy, map) {
         const newX = this.x + dx * this.speed
         const newY = this.y + dy * this.speed
+
+        // check if hi can move  
+
+        
         
     }
 

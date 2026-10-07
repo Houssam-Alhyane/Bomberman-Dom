@@ -85,9 +85,19 @@ export class Map {
 
     }
 
-     canMoveTo(x, y) {
-        // collision check here
+    canMoveTo(x, y) {
+        // check if hi is go to wall
+        if(this.isWall( x, y )) {
+            return false
+        }
+
+
     }
 
 }
+
+
+
+
+
 
