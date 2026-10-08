@@ -16,7 +16,7 @@ export class Player {
         const newY = this.y + dy * this.speed
 
         // check if hi can move  
-
+        
         
         
     }

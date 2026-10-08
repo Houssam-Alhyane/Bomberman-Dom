@@ -1,18 +1,5 @@
-
-/*  # # # # # # # # # # # # # # #
-    # . . . . . . . . . . . . . #
-    # . # . # . # . # . # . # . #
-    # . . . . . . . . . . . . . #
-    # . # . # . # . # . # . # . #
-    # . . . . . . . . . . . . . #
-    # . # . # . # . # . # . # . #
-    # . . . . . . . . . . . . . #
-    # . # . # . # . # . # . # . #
-    # . . . . . . . . . . . . . #
-    # . # . # . # . # . # . # . #
-    # . . . . . . . . . . . . . #
-    # # # # # # # # # # # # # # #
- */
+export const TILE_SIZE = 50;
+export const PLAYER_SIZE = 40;
 
 export class Map {
     constructor(width, height) {
@@ -31,6 +18,16 @@ export class Map {
             x === this.width - 1 ||
             y === this.height - 1 ||
             (x % 2 === 0 && y % 2 === 0)
+        );
+    }
+
+    isInsideMap(x, y) {
+        return x >= 0 && y >= 0 && x < this.width && y < this.height;
+    }
+
+    isBlock(x, y) {
+        return this.tiles.some(
+            (tile) => tile.type === "block" && tile.x === x && tile.y === y
         );
     }
 
@@ -85,13 +82,39 @@ export class Map {
 
     }
 
-    canMoveTo(x, y) {
-        // check if hi is go to wall
-        if(this.isWall( x, y )) {
-            return false
+    // x, y = top-left of the player hitbox in PIXELS (not tile coords)
+    canMoveTo(x, y, width = PLAYER_SIZE, height = PLAYER_SIZE) {
+        const left = x;
+        const top = y;
+        const right = x + width;
+        const bottom = y + height;
+
+        // map boundaries (px)
+        if (left < 0 || top < 0 || right > this.width * TILE_SIZE || bottom > this.height * TILE_SIZE) {
+            return false;
         }
 
+        // tiles touched by the hitbox (px -> tile)
+        const startCol = Math.floor(left / TILE_SIZE);
+        const endCol = Math.ceil(right / TILE_SIZE) - 1;
+        const startRow = Math.floor(top / TILE_SIZE);
+        const endRow = Math.ceil(bottom / TILE_SIZE) - 1;
 
+        for (let row = startRow; row <= endRow; row++) {
+            for (let col = startCol; col <= endCol; col++) {
+                if (!this.isInsideMap(col, row)) {
+                    return false;
+                }
+                if (this.isWall(col, row)) {
+                    return false;
+                }
+                if (this.isBlock(col, row)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
 }
