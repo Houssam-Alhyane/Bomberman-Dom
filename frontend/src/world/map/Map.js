@@ -98,11 +98,11 @@ export class Map {
             return false;
         }
 
-    
+
         const startCol = Math.floor(left / TILE_SIZE);
         const endCol = Math.ceil(right / TILE_SIZE) - 1;
         const startRow = Math.floor(top / TILE_SIZE);
-        const endRow = Math.ceil(bottom / TILE_SIZE) - 1; 
+        const endRow = Math.ceil(bottom / TILE_SIZE) - 1;
 
         for (let row = startRow; row <= endRow; row++) {
             for (let col = startCol; col <= endCol; col++) {

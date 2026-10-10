@@ -1,4 +1,4 @@
-import { Player } from "./palyer.js";
+import { Player } from "../../../../game/player/palyer.js";
 
 // Manage PLayers of  the game
 export class PlayerManager {

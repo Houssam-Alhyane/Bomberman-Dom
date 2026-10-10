@@ -1,4 +1,4 @@
-import { Map } from "../map/map"
+import { Map } from "../map/Map.js"
 
 export class Player {
     constructor(id, nickname, x, y) {
