@@ -1,18 +1,21 @@
-import { CLIENT_EVENTS, SERVER_EVENTS, CONNECTION_EVENTS } from '../shared/events.js';
+import {
+  CLIENT_EVENTS,
+  SERVER_EVENTS,
+  CONNECTION_EVENTS,
+} from '../shared/events.js';
 
 const MIN_NICKNAME_LENGTH = 3;
 const MAX_NICKNAME_LENGTH = 20;
 
-//nickname step of the lobby: validates input, joins over the socket, tracks the local player
+//nickname step: checks the nickname, sends join, and remembers who we are
 export default class Lobby {
   constructor({ client, screen, onJoined }) {
     this.client = client;
     this.screen = screen;
     this.onJoined = onJoined;
 
-    this.player = null;
-    this.joining = false;
-    this.lastNickname = '';
+    this.player = null; //{ id, nickname } once the server accepts us
+    this.joining = false; //true while we wait for the server's answer
 
     client.on(CONNECTION_EVENTS.OPEN, () => this.onOpen());
     client.on(CONNECTION_EVENTS.CLOSE, () => this.onClose());
@@ -21,23 +24,21 @@ export default class Lobby {
   }
 
   onOpen() {
-    this.joining = false;
-
-    this.screen.setValue(this.lastNickname);
     this.screen.setEnabled(true);
     this.screen.setStatus('Connected - enter a nickname');
     this.screen.clearError();
     this.screen.focus();
   }
 
-  //the server drops the player with the socket, so the nickname has to be sent again
+  //the server removes the player when the connection closes, so there is nothing to resume
   onClose() {
     this.joining = false;
     this.player = null;
 
+    this.screen.show();
     this.screen.setEnabled(false);
     this.screen.clearError();
-    this.screen.setStatus('Disconnected - reconnecting...');
+    this.screen.setStatus('Disconnected - refresh the page to play again');
   }
 
   onJoinedMessage(msg) {
@@ -50,6 +51,7 @@ export default class Lobby {
     this.onJoined?.(this.player);
   }
 
+  //only errors that answer our join belong on this screen
   onError(msg) {
     if (!this.joining) return;
 
@@ -69,34 +71,23 @@ export default class Lobby {
     if (problem) {
       this.screen.setError(problem);
       this.screen.focus();
+      return;
+    }
 
+    if (!this.client.send({ type: CLIENT_EVENTS.JOIN, nickname })) {
+      this.screen.setError('Not connected to the server');
       return;
     }
 
     this.screen.clearError();
-
-    const sent = this.client.send({
-      type: CLIENT_EVENTS.JOIN,
-      nickname,
-    });
-
-    if (!sent) {
-      this.screen.setError('Not connected to the server');
-
-      return;
-    }
-
-    this.lastNickname = nickname;
-    this.joining = true;
     this.screen.setStatus('Joining...');
     this.screen.setEnabled(false);
+    this.joining = true;
   }
 
-  //same rules as backend/server/sockets/lobby.js, so bad input never costs a round trip
+  //same rules as the server (lobby.js), so bad input never costs a round trip
   validate(nickname) {
-    if (!nickname) {
-      return 'Nickname is required';
-    }
+    if (!nickname) return 'Nickname is required';
 
     if (
       nickname.length < MIN_NICKNAME_LENGTH ||
