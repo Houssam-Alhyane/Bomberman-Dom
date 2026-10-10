@@ -11,14 +11,17 @@ export class Player {
         this.speed = 1
     }
 
+    // dx = 1 == -> && dx = -1 === <-
+    // dy = 1 == ^ && dy = - 1  === |
     movement(dx, dy, map) {
         const newX = this.x + dx * this.speed
         const newY = this.y + dy * this.speed
+        if (map.canMoveTo(newX, newY)) {
+            this.x = newX;
+            this.y = newY;
+        }
 
-        // check if hi can move  
-        
-        
-        
+
     }
 
 }
