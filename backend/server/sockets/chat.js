@@ -51,6 +51,12 @@ function chat(socket, player, roomManager, message) {
     return;
   }
 
+  //chat stays closed until the room's game is actually running
+  if (room.state !== 'playing') {
+    send(socket, { type: 'error', message: 'Chat unlocks when the game starts' });
+    return;
+  }
+
   const result = validateMessage(message);
 
   if (!result.success) {
