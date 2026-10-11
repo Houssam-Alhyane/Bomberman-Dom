@@ -1,4 +1,4 @@
-const RATE_LIMIT_MAX = 4;
+const RATE_LIMIT_MAX = 16;
 const RATE_LIMIT_WINDOW_MS = 1000;
 
 function initRateLimit(socket) {

@@ -2,6 +2,7 @@ const { joinLobby } = require('./lobby');
 const { send } = require('./broadcast');
 const { chat } = require('./chat');
 const { createRoom, joinRoom, leaveRoom } = require('./rooms');
+const { move } = require('./movement');
 const { roomManager, getPlayerList } = require('./state');
 
 function requireNickname(socket, player) {
@@ -66,6 +67,10 @@ function handleMessage(socket, wss, msg) {
 
     case 'chat':
       chat(socket, player, roomManager, msg.message);
+      return;
+
+    case 'move':
+      move(socket, player, roomManager, msg);
       return;
   }
 }
