@@ -1,0 +1,98 @@
+import {
+  CLIENT_EVENTS,
+  SERVER_EVENTS,
+  CONNECTION_EVENTS,
+} from '../shared/events.js';
+
+//room step: host or join a room, and keep the screen in sync with the server
+export default class Rooms {
+  constructor({ client, screen, onRoomJoined, onGameState } = {}) {
+    this.client = client;
+    this.screen = screen;
+    this.onRoomJoined = onRoomJoined;
+    this.onGameState = onGameState;
+
+    this.room = null; //public info of the room we are in
+    this.isHost = false;
+
+    client.on(SERVER_EVENTS.ROOMS_LIST, (msg) => this.onRoomsList(msg));
+    client.on(SERVER_EVENTS.ROOM_JOINED, (msg) => this.onRoomJoinedMessage(msg));
+    client.on(SERVER_EVENTS.ROOM_STATE, (msg) => this.onRoomState(msg));
+    client.on(SERVER_EVENTS.LEFT_ROOM, () => this.onLeftRoom());
+    client.on(SERVER_EVENTS.ERROR, (msg) => this.onError(msg));
+    client.on(CONNECTION_EVENTS.CLOSE, () => this.onClose());
+  }
+
+  host() {
+    this.screen.clearError();
+    this.send({ type: CLIENT_EVENTS.CREATE_ROOM });
+  }
+
+  join(roomId) {
+    this.screen.clearError();
+    this.send({ type: CLIENT_EVENTS.JOIN_ROOM, roomId });
+  }
+
+  leave() {
+    this.send({ type: CLIENT_EVENTS.LEAVE_ROOM });
+  }
+
+  //true when the message was sent, so callers can react to a dead connection
+  send(message) {
+    if (this.client.send(message)) return true;
+
+    this.screen.setError('Not connected to the server');
+    return false;
+  }
+
+  onRoomsList(msg) {
+    this.screen.setRooms(msg.rooms);
+  }
+
+  onRoomJoinedMessage(msg) {
+    this.room = msg.room;
+    this.isHost = msg.isHost;
+
+    this.screen.setRoom(msg.room, msg.playersList, msg.isHost);
+    this.emitGameState(msg.gameState || { state: msg.room?.state });
+
+    this.onRoomJoined?.({ room: msg.room, isHost: msg.isHost });
+  }
+
+  onRoomState(msg) {
+    if (!this.room || (msg.room && msg.room.id !== this.room.id)) return;
+
+    this.room = msg.room || this.room;
+
+    this.screen.setRoom(this.room, msg.players, this.isHost, msg.gameState);
+    this.emitGameState(msg.gameState);
+  }
+
+  onLeftRoom() {
+    this.room = null;
+    this.isHost = false;
+
+    this.emitGameState(null);
+    this.screen.clearError();
+    this.screen.setView('menu');
+  }
+
+  //the nickname screen takes over again when the connection drops
+  onClose() {
+    this.room = null;
+    this.isHost = false;
+
+    this.emitGameState(null);
+    this.screen.hide();
+  }
+
+  //broadcast the room's game state so listeners know if the game has started
+  emitGameState(gameState) {
+    this.onGameState?.(gameState || null);
+  }
+
+  //room errors are the only thing we own here; nickname errors are handled earlier
+  onError(msg) {
+    this.screen.setError(msg.message || 'Something went wrong');
+  }
+}
