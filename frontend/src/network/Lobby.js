@@ -23,6 +23,7 @@ export default class Lobby {
     client.on(SERVER_EVENTS.ERROR, (msg) => this.onError(msg));
   }
 
+  //called when the socket connects, we can now send messages to the server
   onOpen() {
     this.screen.setEnabled(true);
     this.screen.setStatus('Connected - enter a nickname');
@@ -36,11 +37,12 @@ export default class Lobby {
     this.player = null;
 
     this.screen.show();
-    this.screen.setEnabled(false);
+    this.screen.setEnabled(false);//remove the input so the player cannot try to join again
     this.screen.clearError();
     this.screen.setStatus('Disconnected - refresh the page to play again');
   }
 
+  //the server accepted our join, we are now a player in the lobby
   onJoinedMessage(msg) {
     this.joining = false;
     this.player = { id: msg.playerId, nickname: msg.nickname };
@@ -48,6 +50,7 @@ export default class Lobby {
     this.screen.setStatus(`Joined as ${msg.nickname}`);
     this.screen.hide();
 
+    //Callback to the main app, which will show the lobby and chat screens
     this.onJoined?.(this.player);
   }
 
@@ -63,6 +66,7 @@ export default class Lobby {
     this.screen.focus();
   }
 
+    //called by the screen when the player presses enter or clicks submit
   submit(nickname) {
     if (this.joining) return;
 
@@ -85,7 +89,7 @@ export default class Lobby {
     this.joining = true;
   }
 
-  //same rules as the server (lobby.js), so bad input never costs a round trip
+  //check nickname
   validate(nickname) {
     if (!nickname) return 'Nickname is required';
 
