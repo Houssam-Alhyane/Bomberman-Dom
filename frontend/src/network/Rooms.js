@@ -49,6 +49,7 @@ export default class Rooms {
     this.screen.setRooms(msg.rooms);
   }
 
+  //the server has accepted our request to join a room, and sent us the room info
   onRoomJoinedMessage(msg) {
     this.room = msg.room;
     this.isHost = msg.isHost;
@@ -59,15 +60,15 @@ export default class Rooms {
     this.onRoomJoined?.({ room: msg.room, isHost: msg.isHost });
   }
 
+  //the server has sent us the current state and update if players have joined/left
   onRoomState(msg) {
     if (!this.room || (msg.room && msg.room.id !== this.room.id)) return;
 
     this.room = msg.room || this.room;
-
     this.screen.setRoom(this.room, msg.players, this.isHost, msg.gameState);
     this.emitGameState(msg.gameState);
   }
-
+  //the server has informed us that we have left the room
   onLeftRoom() {
     this.room = null;
     this.isHost = false;
