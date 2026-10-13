@@ -49,16 +49,11 @@
 }
 
 .tile.block {
-<<<<<<< Updated upstream
     background: #8d6e63;
-=======
-    background-color: #8d6e63;
->>>>>>> Stashed changes
     border: 2px solid #5d4037;
 }
 
 .player {
-<<<<<<< Updated upstream
     z-index: 2;
     border: 2px solid rgba(255, 255, 255, 0.85);
     border-radius: 50%;
@@ -86,16 +81,3 @@
 .hidden {
     display: none !important;
 }
-=======
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 25px;
-    height: 25px;
-    background-color: #00e676;
-    border: 2px solid #ffffff;
-    border-radius: 50%;
-    box-sizing: border-box;
-    z-index: 10;
-}
->>>>>>> Stashed changes
