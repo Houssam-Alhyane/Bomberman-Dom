@@ -3,17 +3,9 @@ import { GameState } from './GameState.js';
 import { Performance } from './Performance.js';
 import { Renderer } from './Renderer.js';
 import { Map } from '../world/map/Map.js';
-import { Player } from '../world/player/Player.js';
-import { Input } from './Input.js';
-import { GRID_WIDTH, GRID_HEIGHT, TILE_SIZE } from '../shared/constants.js';
-
-// Corner spawn tiles (x, y), one per player slot.
-const SPAWNS = [
-  [1, 1],
-  [13, 1],
-  [1, 11],
-  [13, 11],
-];
+import { PlayerManager } from '../world/player/PlayerManager.js';
+import { Input } from '../world/player/playerinput.js';
+import { GRID_WIDTH, GRID_HEIGHT } from '../shared/constants.js';
 
 // Coordinates the game engine subsystems and manages lifecycle.
 export class GameEngine {
@@ -21,6 +13,7 @@ export class GameEngine {
     this.state = new GameState();
     this.performance = new Performance();
     this.renderer = null;
+    this.players = new PlayerManager();
     this.input = new Input();
     this.onMove = null;
 
@@ -31,25 +24,31 @@ export class GameEngine {
     );
   }
 
-  // Start a match inside the given container for the given players.
-  init(container, { localPlayerId = 'local', players = [] } = {}) {
+  init(container, { localPlayerId = 'local', players = [], seed = 1 } = {}) {
     this.destroy();
     this.state.reset();
-    this.state.setMap(new Map(GRID_WIDTH, GRID_HEIGHT));
     this.state.localPlayerId = localPlayerId;
+    this.state.seed = seed;
+    this.state.setMap(new Map(GRID_WIDTH, GRID_HEIGHT, seed));
+
+    // Fresh player list and key state for this match.
+    this.players = new PlayerManager();
+    this.input.reset();
 
     const list = players.length ? players : [{ id: localPlayerId, nickname: 'Player' }];
-    list.forEach((player, index) => this.addPlayer(player.id, player.nickname, index));
+    list.forEach((player) => this.addPlayer(player.id, player.nickname));
 
     this.renderer = new Renderer(container);
   }
 
   // Add a player at the next free spawn tile.
-  addPlayer(id, nickname, index = this.state.players.size) {
-    const [col, row] = SPAWNS[index % SPAWNS.length];
-    const player = new Player(id, nickname, col * TILE_SIZE, row * TILE_SIZE);
+  addPlayer(id, nickname) {
+    const player = this.players.addPlayer(id, nickname);
 
-    this.state.players.set(id, player);
+    if (player) {
+      this.state.players.set(id, player);
+    }
+
     return player;
   }
 
@@ -98,6 +97,7 @@ export class GameEngine {
     this.loop.stop();
     this.renderer?.destroy();
     this.renderer = null;
+    this.players = new PlayerManager();
   }
 }
 
