@@ -54,4 +54,16 @@ export class Renderer {
       children
     );
   }
+
+  // Render map tiles (walls and blocks).
+  renderTiles(tiles = []) {
+    return tiles.map((tile) =>
+      h('div', {
+        key: `tile-${tile.x}-${tile.y}`,
+        class: `tile ${tile.type}`,
+        style: `width:${TILE_SIZE}px;height:${TILE_SIZE}px;transform:translate3d(${tile.x * TILE_SIZE}px,${tile.y * TILE_SIZE}px,0);`,
+      })
+    );
+  }
+
 }
