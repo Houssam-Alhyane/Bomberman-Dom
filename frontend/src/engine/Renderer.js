@@ -92,4 +92,42 @@ export class Renderer {
     });
   }
 
+  // Render explosion blasts.
+  renderExplosions(explosions = []) {
+    return explosions.map((exp, index) => {
+      const x = exp.x < 30 ? exp.x * TILE_SIZE : exp.x;
+      const y = exp.y < 30 ? exp.y * TILE_SIZE : exp.y;
+      return h('div', {
+        key: `exp-${exp.id ?? index}`,
+        class: 'explosion',
+        style: `width:${TILE_SIZE}px;height:${TILE_SIZE}px;transform:translate3d(${x}px,${y}px,0);`,
+      });
+    });
+  }
+
+  // Render all active players.
+  renderPlayers(players, localId) {
+    const list = players instanceof Map ? Array.from(players.values()) : (players || []);
+
+    return list.map((player, index) => {
+      const isDead = !player.alive || player.lives <= 0;
+      const isLocal = player.id === localId;
+      const color = PLAYER_COLORS[index % PLAYER_COLORS.length];
+
+      return h('div', {
+        key: `player-${player.id}`,
+        class: `player ${isDead ? 'dead' : ''} ${isLocal ? 'local' : ''}`.trim(),
+        style: `width:${PLAYER_SIZE}px;height:${PLAYER_SIZE}px;background:${color};transform:translate3d(${player.x}px,${player.y}px,0);`,
+      });
+    });
+  }
+
+  // Remove the board element from the DOM.
+  destroy() {
+    if (this.domNode) {
+      this.domNode.remove();
+      this.domNode = null;
+      this.vnode = null;
+    }
+  }
 }
