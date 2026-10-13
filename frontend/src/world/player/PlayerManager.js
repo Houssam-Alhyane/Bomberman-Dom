@@ -1,4 +1,5 @@
-import { Player } from "./palyer.js";
+import { TILE_SIZE } from "../map/Map.js";
+import { Player } from "./Player.js";
 
 // Manage PLayers of  the game
 export class PlayerManager {
@@ -25,8 +26,8 @@ export class PlayerManager {
         const player = new Player(
             id,
             nickname,
-            spawn.x,
-            spawn.y
+            spawn.x * TILE_SIZE,
+            spawn.y * TILE_SIZE
         );
 
         this.players.push(player);

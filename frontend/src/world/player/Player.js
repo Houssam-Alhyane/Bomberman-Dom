@@ -8,7 +8,7 @@ export class Player {
         this.y = y
         this.lives = 3
         this.alive = true
-        this.speed = 1
+        this.speed = 15
     }
 
     // dx = 1 == -> && dx = -1 === <-

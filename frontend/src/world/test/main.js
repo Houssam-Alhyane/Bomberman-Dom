@@ -1,13 +1,14 @@
 import { Map, PLAYER_SIZE, TILE_SIZE } from "../map/Map.js";
-import { Player } from "../player/Player.js";
+import { handleInput } from "../player/playerinput.js";
+import { PlayerManager } from "../player/PlayerManager.js";
 
 const MAP_WIDTH = 15;
 const MAP_HEIGHT = 13;
 const board = document.querySelector("#game-board");
 
 const map = new Map(MAP_WIDTH, MAP_HEIGHT);
-const player = new Player("test-player", "Player 1", TILE_SIZE, TILE_SIZE);
-const heldKeys = new Set();
+const playerManager = new PlayerManager();
+const player = playerManager.addPlayer("test-player", "Player 1");
 
 board.style.setProperty("--map-width", MAP_WIDTH);
 board.style.setProperty("--map-height", MAP_HEIGHT);
@@ -40,30 +41,12 @@ function updatePlayer(element) {
     element.style.transform = `translate(${player.x}px, ${player.y}px)`;
 }
 
-function movePlayer() {
-    if (heldKeys.has("ArrowUp")) player.movement(0, -1, map);
-    if (heldKeys.has("ArrowDown")) player.movement(0, 1, map);
-    if (heldKeys.has("ArrowLeft")) player.movement(-1, 0, map);
-    if (heldKeys.has("ArrowRight")) player.movement(1, 0, map);
-}
-
 function gameLoop() {
-    movePlayer();
     updatePlayer(playerElement);
     requestAnimationFrame(gameLoop);
 }
 
-document.addEventListener("keydown", (event) => {
-    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.key)) {
-        event.preventDefault();
-        heldKeys.add(event.key);
-    }
-});
-
-document.addEventListener("keyup", (event) => {
-    heldKeys.delete(event.key);
-});
-
 renderMap();
 const playerElement = createPlayer();
+handleInput(player, map);
 gameLoop();
