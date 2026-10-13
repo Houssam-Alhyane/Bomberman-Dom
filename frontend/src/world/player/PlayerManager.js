@@ -1,5 +1,5 @@
-import { Player } from "../../../../game/player/palyer.js";
-
+import { Player } from './Player.js';
+import { TILE_SIZE } from '../map/Map.js';
 // Manage PLayers of  the game
 export class PlayerManager {
     constructor() {
@@ -22,11 +22,12 @@ export class PlayerManager {
 
         const spawn = this.spawnPositions[playerIndex];
 
+        // Spawns are tiles; Player expects pixel coordinates.
         const player = new Player(
             id,
             nickname,
-            spawn.x,
-            spawn.y
+            spawn.x * TILE_SIZE,
+            spawn.y * TILE_SIZE
         );
 
         this.players.push(player);
