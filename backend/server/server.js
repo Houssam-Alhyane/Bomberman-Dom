@@ -3,9 +3,12 @@ const WebSocket = require('ws');
 
 const { handleConnection } = require('./sockets/connection');
 const { startHeartbeat } = require('./sockets/heartbeat');
-const { serveStatic } = require('./static');
 
-const server = http.createServer(serveStatic);
+//the backend only speaks websocket ; the frontend is served separately
+const server = http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
+  res.end('Bomberman backend is running (WebSocket only)');
+});
 
 server.on('error', (err) => {
   console.error(`HTTP server error: ${err.message}`);
@@ -25,5 +28,5 @@ wss.on('connection', (socket) => {
 startHeartbeat(wss);
 
 server.listen(8080, () => {
-  console.log('Server running on http://localhost:8080');
+  console.log('WebSocket server running on ws://localhost:8080');
 });

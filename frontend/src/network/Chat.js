@@ -17,7 +17,7 @@ export default class Chat {
     this.onError = onError;
 
     this.selfId = null; //our player id, so we can mark our own messages
-    this.messages = []; //bounded history, never grows without limit
+    this.messages = []; //store all messages
     this.locked = true; //no chatting until the game actually starts
 
     client.on(SERVER_EVENTS.CHAT, (msg) => this.receive(msg));
@@ -69,7 +69,7 @@ export default class Chat {
     if (!message) return;
 
     const playerId = payload.playerId ?? null;
-
+    //if playerId is not a string or number, ignore the message
     const entry = {
       playerId,
       nickname: typeof payload.nickname === 'string' ? payload.nickname : '',

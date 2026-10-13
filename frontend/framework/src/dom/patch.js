@@ -1,10 +1,11 @@
 import { render } from "./render.js";
 import { isEventProp, eventName } from "../events.js";
+import { setAttribute } from "./attributes.js";
 
 export function patch(oldVNode, newVNode, domNode) {
     if (newVNode === null || newVNode === undefined || newVNode === false) {
         domNode.remove();
-        return;
+        return null;
     }
 
     // 1- text => text
@@ -12,7 +13,7 @@ export function patch(oldVNode, newVNode, domNode) {
         if (oldVNode !== newVNode) {
             domNode.textContent = newVNode;
         }
-        return;
+        return domNode;
     }
 
     // 2- text <=> element
@@ -21,8 +22,7 @@ export function patch(oldVNode, newVNode, domNode) {
         typeof newVNode === "string" ||
         oldVNode.tag !== newVNode.tag
     ) {
-        replaceNode(newVNode, domNode);
-        return;
+        return replaceNode(newVNode, domNode);
     }
 
     // 3- both is elements
@@ -30,12 +30,16 @@ export function patch(oldVNode, newVNode, domNode) {
     updateAttributes(oldVNode.attrs, newVNode.attrs, domNode);
     // - 
     patchChildren(oldVNode.children, newVNode.children, domNode);
+
+    return domNode;
 }
 
 function replaceNode(vnode, domNode) {
     const temp = document.createElement("div");
     render(vnode, temp);
-    domNode.replaceWith(temp.firstChild);
+    const newNode = temp.firstChild;
+    domNode.replaceWith(newNode);
+    return newNode;
 }
 
 
@@ -164,7 +168,7 @@ function updateAttributes(oldAttrs, newAttrs, element) {
                 element.checked = Boolean(value);
             }
         } else if (oldAttrs[name] !== value) {
-            element.setAttribute(name, value);
+            setAttribute(element, name, value);
         }
     }
 

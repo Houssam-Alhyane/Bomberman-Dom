@@ -1,4 +1,5 @@
 import { isEventProp, eventName } from "../events.js";
+import { setAttribute } from "./attributes.js";
 
 export function render(vnode, container) {
     if (vnode === null || vnode === undefined || vnode === false) {
@@ -23,7 +24,7 @@ export function render(vnode, container) {
         } else if (name === "checked") {
             element.checked = Boolean(value);
         } else {
-            element.setAttribute(name, value);
+            setAttribute(element, name, value);
         }
     }
 
