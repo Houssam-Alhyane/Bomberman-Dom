@@ -66,4 +66,30 @@ export class Renderer {
     );
   }
 
+  // Render power-up items.
+  renderPowerUps(powerUps = []) {
+    return powerUps.map((item, index) => {
+      const x = item.x < 30 ? item.x * TILE_SIZE : item.x;
+      const y = item.y < 30 ? item.y * TILE_SIZE : item.y;
+      return h('div', {
+        key: `powerup-${item.id ?? index}`,
+        class: `powerup ${item.type || ''}`.trim(),
+        style: `width:${TILE_SIZE}px;height:${TILE_SIZE}px;transform:translate3d(${x}px,${y}px,0);`,
+      });
+    });
+  }
+
+  // Render active bombs.
+  renderBombs(bombs = []) {
+    return bombs.map((bomb, index) => {
+      const x = bomb.x < 30 ? bomb.x * TILE_SIZE : bomb.x;
+      const y = bomb.y < 30 ? bomb.y * TILE_SIZE : bomb.y;
+      return h('div', {
+        key: `bomb-${bomb.id ?? index}`,
+        class: 'bomb',
+        style: `width:${TILE_SIZE}px;height:${TILE_SIZE}px;transform:translate3d(${x}px,${y}px,0);`,
+      });
+    });
+  }
+
 }
