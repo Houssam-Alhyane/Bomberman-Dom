@@ -1,12 +1,15 @@
 import { CONNECTION_EVENTS } from '../shared/events.js';
 
-//same host as the page, or add ?ws=ws://localhost:8080 to the page url to use another server
+//the frontend and backend run on different ports now, so point at the backend
+//port (or add ?ws=ws://some-host:port to the page url to override it)
+const BACKEND_PORT = 8080;
+
 function getServerUrl() {
   const custom = new URLSearchParams(location.search).get('ws');
   if (custom) return custom;
 
   const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-  return `${protocol}//${location.host || 'localhost:8080'}`;
+  return `${protocol}//${location.hostname || 'localhost'}:${BACKEND_PORT}`;
 }
 
 export default class WebSocketClient {
