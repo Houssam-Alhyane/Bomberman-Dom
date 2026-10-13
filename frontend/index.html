@@ -1,30 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bomberman</title>
-  <link rel="icon" type="image/svg+xml" href="favicon.svg">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Nunito:wght@600;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles/reset.css">
-  <link rel="stylesheet" href="styles/layout.css">
-  <link rel="stylesheet" href="styles/lobby.css">
-  <link rel="stylesheet" href="styles/chat.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bomberman DOM</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💣</text></svg>">
+    <link rel="stylesheet" href="./styles/reset.css">
+    <link rel="stylesheet" href="./styles/screens.css">
+    <link rel="stylesheet" href="./styles/game.css">
 </head>
 <body>
-  <!-- page background, static: everything inside #app is built by the framework -->
-  <div class="sky">
-    <div class="cloud cloud-1"></div>
-    <div class="cloud cloud-2"></div>
-    <div class="cloud cloud-3"></div>
-    <div class="hill hill-back"></div>
-    <div class="hill hill-front"></div>
-  </div>
+    <div id="app"></div>
 
-  <main id="app" class="app"></main>
-
-  <script type="module" src="main.js"></script>
+    <script type="module" src="./main.js"></script>
 </body>
 </html>
