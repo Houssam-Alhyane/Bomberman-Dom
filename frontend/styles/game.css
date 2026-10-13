@@ -6,57 +6,34 @@
     overflow: hidden;
 }
 
+/* Every entity is placed with translate3d, so it must be absolutely positioned.
+   Scoped to #game-board so lobby mascots (which reuse .bomb) are unaffected. */
+#game-board .tile,
+#game-board .player,
+#game-board .bomb,
+#game-board .explosion,
+#game-board .powerup {
+    position: absolute;
+    top: 0;
+    left: 0;
+    box-sizing: border-box;
+}
+
 .tile.wall {
     background-color: #424242;
     border: 2px solid #212121;
-    box-sizing: border-box;
 }
 
 .tile.block {
     background-color: #8d6e63;
     border: 2px solid #5d4037;
-    box-sizing: border-box;
 }
 
 .player {
-    background-color: #00e676;
-    border: 2px solid #ffffff;
-    border-radius: 50%; 
-    box-sizing: border-box;
     z-index: 10;
-    transition: none;
-}
-#game-board {
-    position: relative;
-    background-color: #2e7d32;
-    border: 4px solid #1b5e20;
-    margin: 20px auto;
-    overflow: hidden;
-}
-
-.tile {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 50px;
-    height: 50px;
-    box-sizing: border-box;
-}
-
-.tile.wall {
-    background-color: #424242;
-    border: 2px solid #212121;
-}
-
-.tile.block {
-    background: #8d6e63;
-    border: 2px solid #5d4037;
-}
-
-.player {
-    z-index: 2;
     border: 2px solid rgba(255, 255, 255, 0.85);
     border-radius: 50%;
+    transition: none;
 }
 
 .player.dead {
@@ -76,6 +53,180 @@
     background: radial-gradient(circle, #fff59d, #ff9800 55%, #e65100);
     border-radius: 50%;
     opacity: 0.85;
+}
+
+.powerup {
+    z-index: 1;
+    background-color: #ffca28;
+    border: 2px solid #f57f17;
+    border-radius: 8px;
+}
+
+/* Game screen shell (board + HUD + chat) */
+.game-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: min(100%, 820px);
+}
+
+.game-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+}
+
+.board {
+    width: 100%;
+    overflow-x: auto;
+}
+
+/* HUD */
+.hud {
+    flex: 1;
+    min-width: 0;
+}
+
+.hud-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.hud-players {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.hud-player {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: #182029;
+    border: 1px solid #26323d;
+    border-radius: 999px;
+    font-size: 0.85rem;
+}
+
+.hud-player.local {
+    border-color: #00e676;
+}
+
+.hud-name {
+    color: #e8eef5;
+}
+
+.lives {
+    color: #ff5252;
+    letter-spacing: 1px;
+}
+
+.hud-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #9fb0c0;
+    font-size: 0.85rem;
+}
+
+.hud-value {
+    color: #00e676;
+    font-weight: 700;
+}
+
+/* Chat */
+.chat {
+    width: 100%;
+}
+
+.chat-box {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    background: #182029;
+    border: 1px solid #26323d;
+    border-radius: 14px;
+}
+
+.chat-messages {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    max-height: 140px;
+    overflow-y: auto;
+    font-size: 0.85rem;
+}
+
+.chat-msg {
+    color: #e8eef5;
+    word-break: break-word;
+}
+
+.chat-msg.own {
+    color: #00e676;
+}
+
+.chat-author {
+    color: #9fb0c0;
+}
+
+.chat-error {
+    margin: 0;
+    color: #ff5252;
+    font-size: 0.8rem;
+}
+
+.chat-form {
+    display: flex;
+    gap: 8px;
+}
+
+.chat-input {
+    flex: 1;
+    padding: 10px 12px;
+    color: inherit;
+    background: #0f141a;
+    border: 1px solid #33424f;
+    border-radius: 10px;
+}
+
+/* Game over overlay */
+.game-over {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: rgba(9, 12, 17, 0.8);
+}
+
+.game-over-box {
+    padding: 28px 32px;
+    text-align: center;
+    background: #182029;
+    border: 1px solid #26323d;
+    border-radius: 16px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+
+.game-over-title {
+    margin: 0 0 6px;
+    color: #00e676;
+}
+
+.game-over-winner {
+    margin: 0 0 16px;
+    color: #9fb0c0;
 }
 
 .hidden {
