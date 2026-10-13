@@ -1,6 +1,5 @@
 const { send } = require('./broadcast');
 const { parseMessage } = require('./message');
-const { initRateLimit, allowMessage } = require('./rateLimit');
 const { handleMessage } = require('./handlers');
 const { createPlayer, removePlayer, roomManager } = require('./state');
 const { broadcastRooms, removeFromRoom } = require('./rooms');
@@ -12,8 +11,6 @@ function handleConnection(socket, wss) {
     socket.isAlive = true;
   });
 
-  initRateLimit(socket);
-
   const player = createPlayer(socket);
 
   //listener Node turns it into an uncaught exception and the server crashes
@@ -23,18 +20,6 @@ function handleConnection(socket, wss) {
   });
 
   socket.on('message', (data) => {
-    const rate = allowMessage(socket);
-
-    if (!rate.allowed) {
-      if (rate.notify) {
-        send(socket, {
-          type: 'error',
-          message: 'Too many messages, slow down',
-        });
-      }
-      return;
-    }
-
     const msg = parseMessage(data);
 
     if (!msg) {
