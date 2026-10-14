@@ -16,6 +16,7 @@ export class Input {
     constructor(target = document) {
         this.target = target;
         this.keys = { up: false, down: false, left: false, right: false };
+        this.actions = { bomb: false, bombHeld: false };
 
         this.onKeyDown = (event) => this.setKey(event, true);
         this.onKeyUp = (event) => this.setKey(event, false);
@@ -29,6 +30,20 @@ export class Input {
     setKey(event, pressed) {
         // Single characters are lowercased so W/A/S/D and w/a/s/d both work.
         const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+
+        // space is an action, fired once per press and not while held
+        if (key === ' ') {
+            event.preventDefault();
+            if (pressed && !this.actions.bombHeld) {
+                this.actions.bomb = true;
+                this.actions.bombHeld = true;
+            }
+            if (!pressed) {
+                this.actions.bombHeld = false;
+            }
+            return;
+        }
+
         const direction = KEY_DIRECTIONS[key];
 
         if (!direction) return;
@@ -49,6 +64,7 @@ export class Input {
     // Forget held keys, e.g. when a match starts or the window loses focus.
     reset() {
         this.keys = { up: false, down: false, left: false, right: false };
+        this.actions = { bomb: false, bombHeld: false };
     }
 
     destroy() {
