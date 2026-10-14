@@ -1,17 +1,26 @@
 import { h, render } from '../../framework/src/index.js';
 
 export default class GameScreen {
-  constructor(root = document.getElementById('app')) {
+  constructor(root = document.getElementById('app'), { onLeave } = {}) {
+    this.onLeave = onLeave || null;
     this.node = render(
       h('section', { id: 'game-screen', class: 'game-screen hidden' }, [
         h('div', { class: 'game-top' }, [
           h('div', { id: 'hud', class: 'hud' }),
-          h('button', {
-            id: 'leave-game-btn',
-            class: 'btn btn-secondary btn-small',
-            type: 'button',
-            onClick: () => this.onLeave?.(),
-          }, ['Leave']),
+          h('div', { class: 'game-top-actions' }, [ // Container l-actions
+            h('button', {
+              id: 'chat-toggle-btn',
+              class: 'btn btn-secondary btn-small',
+              type: 'button',
+              onClick: () => this.onToggleChat?.(), // Kat-fto7 w t-sdd l-chat
+            }, ['Chat']),
+            h('button', {
+              id: 'leave-game-btn',
+              class: 'btn btn-secondary btn-small',
+              type: 'button',
+              onClick: () => this.onLeave?.(),
+            }, ['Leave']),
+          ]),
         ]),
         h('div', { id: 'board', class: 'board' }),
         h('div', { id: 'chat', class: 'chat' }),
@@ -24,7 +33,6 @@ export default class GameScreen {
     this.hud = this.node.querySelector('#hud');
     this.chat = this.node.querySelector('#chat');
     this.gameOver = this.node.querySelector('#game-over');
-    this.onLeave = null;
   }
 
   show() {

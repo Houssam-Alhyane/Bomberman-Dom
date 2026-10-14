@@ -9,13 +9,13 @@ export default class GameOverScreen {
     this.node = null;
     this.winner = null;
   }
-
+  // show game over box with winner name
   show(winner = null) {
     this.winner = winner;
     this.render();
     this.container.classList.remove('hidden');
   }
-
+  // hide game over screen
   hide() {
     this.container.classList.add('hidden');
   }
@@ -32,7 +32,7 @@ export default class GameOverScreen {
         ['Back to lobby']
       ),
     ]);
-
+    // if vnode exist make patch , if not render
     this.node = this.old ? patch(this.old, next, this.node) : render(next, this.container);
     this.old = next;
   }

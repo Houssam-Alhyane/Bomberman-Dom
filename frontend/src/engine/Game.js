@@ -15,6 +15,8 @@ export class GameEngine {
     this.renderer = null;
     this.players = new PlayerManager();
     this.input = new Input();
+    this.wsClient = null;
+    this.chatOpen = false;
     this.onMove = null;
 
     this.loop = new GameLoop(
@@ -24,11 +26,12 @@ export class GameEngine {
     );
   }
 
-  init(container, { localPlayerId = 'local', players = [], seed = 1 } = {}) {
+  init(container, { localPlayerId = 'local', players = [], seed = 1, wsClient = null } = {}) {
     this.destroy();
     this.state.reset();
     this.state.localPlayerId = localPlayerId;
     this.state.seed = seed;
+    if (wsClient) this.wsClient = wsClient;
     this.state.setMap(new Map(GRID_WIDTH, GRID_HEIGHT, seed));
 
     // Fresh player list and key state for this match.
@@ -73,6 +76,7 @@ export class GameEngine {
 
   // Move only the local player and report it so it can be broadcast.
   update() {
+    if (this.chatOpen) return;
     const player = this.state.players.get(this.state.localPlayerId);
     if (!player || !this.state.map) return;
 

@@ -15,6 +15,7 @@ const root = document.getElementById('app');
 
 const client = new WebSocketClient();
 const engine = new GameEngine();
+engine.wsClient = client;
 
 let me = { id: null, nickname: '' };
 let chat = null;
@@ -25,9 +26,16 @@ const nickname = new NicknameScreen({
   onSubmit: (value) => nicknameFlow.submit(value),
 });
 
-const gameScreen = new GameScreen(root);
+const gameScreen = new GameScreen(root, { onLeave: () => rooms?.leave() });
 const hud = new HUD(gameScreen.hud);
-const chatBox = new ChatBox(gameScreen.chat, { onSend: (text) => chat?.send(text) });
+const chatBox = new ChatBox(gameScreen.chat, {
+  onSend: (text) => chat?.send(text),
+  onToggle: (isOpen) => {
+    engine.chatOpen = isOpen;
+    if (isOpen) engine.input.reset();
+  },
+});
+gameScreen.onToggleChat = () => chatBox.toggle();
 const gameOver = new GameOverScreen(gameScreen.gameOver, { onLeave: () => rooms?.leave() });
 
 const lobby = new LobbyScreen({
@@ -72,7 +80,6 @@ function startMatch(msg) {
   lobby.hide();
   nickname.hide();
   gameScreen.show();
-  chatBox.show();
 
   chat.setSelfId(me.id);
   chat.setLocked(false);
@@ -84,6 +91,7 @@ function startMatch(msg) {
     localPlayerId: me.id,
     players: msg.players,
     seed,
+    wsClient: client,
   });
   engine.start();
 
@@ -96,7 +104,6 @@ function startMatch(msg) {
 function backToLobby() {
   engine.destroy();
   chat.setLocked(true);
-  chatBox.hide();
   gameOver.hide();
   gameScreen.hide();
 }
