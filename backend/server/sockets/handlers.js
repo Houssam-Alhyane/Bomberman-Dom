@@ -3,6 +3,7 @@ const { send } = require('./broadcast');
 const { chat } = require('./chat');
 const { createRoom, joinRoom, leaveRoom } = require('./rooms');
 const { move } = require('./movement');
+const { placeBomb, powerupCollect, gameOver } = require('./bombs');
 const { roomManager, getPlayerList } = require('./state');
 
 function requireNickname(socket, player) {
@@ -71,6 +72,18 @@ function handleMessage(socket, wss, msg) {
 
     case 'move':
       move(socket, player, roomManager, msg);
+      return;
+
+    case 'place_bomb':
+      placeBomb(socket, player, roomManager, msg);
+      return;
+
+    case 'powerup_collect':
+      powerupCollect(socket, player, roomManager, msg);
+      return;
+
+    case 'game_over':
+      gameOver(socket, player, roomManager, msg);
       return;
   }
 }
