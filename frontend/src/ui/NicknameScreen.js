@@ -64,7 +64,6 @@ export default class NicknameScreen {
               h('input', {
                 id: 'nickname-input',
                 type: 'text',
-                minlength: 3,
                 maxlength: 20,
                 placeholder: 'Enter nickname',
                 'aria-label': 'Nickname',
@@ -103,7 +102,7 @@ export default class NicknameScreen {
 
   update() {
     const next = this.view();
-
+    //render for the first time, or patch the old vnode with the new one
     this.domNode =
       this.oldVNode === null
         ? render(next, this.root)
@@ -128,10 +127,6 @@ export default class NicknameScreen {
     this.set({ enabled });
   }
 
-  setValue(value) {
-    this.set({ value });
-  }
-
   show() {
     this.set({ visible: true });
   }
@@ -146,7 +141,7 @@ export default class NicknameScreen {
     input?.focus();
     input?.select();
   }
-
+  //changes the state with a patch, merging the new values with the old ones
   set(patchState) {
     this.state.set({ ...this.state.get(), ...patchState });
   }

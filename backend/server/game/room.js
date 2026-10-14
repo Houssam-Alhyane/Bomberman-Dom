@@ -159,7 +159,7 @@ class Room {
       }
     }, WAIT_TIMER_DURATION);
   }
-
+  //start timer for 10s countdown, then start the game
   startReadyTimer() {
     this.clearTimers();
     this.state = 'startCountdown';
@@ -173,7 +173,7 @@ class Room {
       this.startGame();
     }, READY_TIMER_DURATION);
   }
-
+//start the game, clear timers, change state to playing, and call onGameStart callback
   startGame() {
     this.clearTimers();
     this.state = 'playing';

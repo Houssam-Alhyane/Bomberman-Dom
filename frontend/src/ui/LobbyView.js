@@ -158,6 +158,7 @@ function renderRoom(state, handlers) {
       isHost ? 'You are the host' : `Host: ${room.hostNickname || '-'}`,
     ]),
     h('div', { class: 'room-state' }, [roomStateText(room, gameState)]),
+    h('div', { class: 'room-count' }, [`Players ${players.length}/${room.maxPlayers}`]),
     h('ul', { class: 'room-players' }, playerItems),
     h(
       'button',
@@ -177,11 +178,11 @@ function roomStateText(room, gameState) {
   const stateName = gameState?.state || room.state;
 
   if (stateName === 'waitCountdown') {
-    return `Waiting for players... ${gameState?.waitTimeLeft ?? ''}s`;
+    return withSeconds('Waiting for players...', gameState?.waitTimeLeft);
   }
 
   if (stateName === 'startCountdown') {
-    return `Game starts in ${gameState?.readyTimeLeft ?? ''}s`;
+    return withSeconds('Game starts in', gameState?.readyTimeLeft);
   }
 
   if (stateName === 'playing') {
@@ -189,6 +190,14 @@ function roomStateText(room, gameState) {
   }
 
   return 'Waiting for players...';
+}
+
+//only show the seconds when the server actually sent a number: an empty
+//gameState must not leave a trailing "s"
+function withSeconds(label, seconds) {
+  return seconds === undefined || seconds === null
+    ? label
+    : `${label} ${seconds}s`;
 }
 
 function isJoinable(room) {
