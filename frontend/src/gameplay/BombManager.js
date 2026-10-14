@@ -2,10 +2,12 @@ import { TILE_SIZE, PLAYER_SIZE } from '../world/map/Map.js';
 import { Bomb } from './Bomb.js';
 import { Explosion } from './Explosion.js';
 import { DamageSystem } from './DamageSystem.js';
+import { PowerUp, randomType, shouldDrop } from './PowerUp.js';
 
 // fixed rule values agreed for the team.
 const BOMB_TIMER = 3000;
 const EXPLOSION_DURATION = 500;
+const DROP_CHANCE = 0.3;
 
 // the single front door for bombs, explosions, damage, power-ups and winner.
 export class BombManager {
@@ -13,6 +15,7 @@ export class BombManager {
     this.nextId = 1;
     this.eventHandler = null;
     this.damage = new DamageSystem();
+    this.random = Math.random;
   }
 
   // register the outgoing fact handler, wired to the socket elsewhere.
@@ -94,5 +97,11 @@ export class BombManager {
     map.tiles = map.tiles.filter(
       (entry) => !(entry.type === 'block' && entry.x === tile.x && entry.y === tile.y)
     );
+
+    if (!shouldDrop(DROP_CHANCE, this.random)) return;
+
+    const type = randomType(this.random);
+    state.powerUps.push(new PowerUp(this.newId('power'), tile.x, tile.y, type));
+    this.emit({ type: 'powerup_spawn', x: tile.x, y: tile.y, powerUpType: type });
   }
 }
