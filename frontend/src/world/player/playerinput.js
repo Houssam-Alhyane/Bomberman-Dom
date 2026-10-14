@@ -61,6 +61,13 @@ export class Input {
         return { dx, dy };
     }
 
+    // True once for each fresh space press, then clears the flag.
+    consumeBomb() {
+        const pressed = this.actions.bomb;
+        this.actions.bomb = false;
+        return pressed;
+    }
+
     // Forget held keys, e.g. when a match starts or the window loses focus.
     reset() {
         this.keys = { up: false, down: false, left: false, right: false };
