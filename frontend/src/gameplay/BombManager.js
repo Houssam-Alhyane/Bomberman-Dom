@@ -15,6 +15,7 @@ export class BombManager {
     this.nextId = 1;
     this.eventHandler = null;
     this.damage = new DamageSystem();
+    this.announced = false;
     this.random = Math.random;
   }
 
@@ -56,6 +57,9 @@ export class BombManager {
     state.explosions = state.explosions.filter((explosion) => !explosion.expired);
 
     this.collect(state);
+
+    // decide the match once, after every death from this step is applied
+    if (detonated.length) this.checkWinner(state);
   }
 
   // hand an outgoing fact to the network layer.
@@ -126,5 +130,17 @@ export class BombManager {
       if (isCovered(player, [{ x, y }])) return player;
     }
     return null;
+  }
+
+  // one survivor wins, none is a draw, and the result is announced once.
+  checkWinner(state) {
+    if (this.announced) return;
+
+    const alive = [...state.players.values()].filter((player) => player.alive);
+    if (alive.length > 1) return;
+
+    state.winner = alive.length === 1 ? alive[0].id : null;
+    this.announced = true;
+    this.emit({ type: 'game_over', winnerId: state.winner });
   }
 }
