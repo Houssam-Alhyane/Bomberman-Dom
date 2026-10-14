@@ -1,0 +1,37 @@
+import { h, render } from '../../framework/src/index.js';
+
+export default class GameScreen {
+  constructor(root = document.getElementById('app')) {
+    this.node = render(
+      h('section', { id: 'game-screen', class: 'game-screen hidden' }, [
+        h('div', { class: 'game-top' }, [
+          h('div', { id: 'hud', class: 'hud' }),
+          h('button', {
+            id: 'leave-game-btn',
+            class: 'btn btn-secondary btn-small',
+            type: 'button',
+            onClick: () => this.onLeave?.(),
+          }, ['Leave']),
+        ]),
+        h('div', { id: 'board', class: 'board' }),
+        h('div', { id: 'chat', class: 'chat' }),
+        h('div', { id: 'game-over', class: 'game-over hidden' }),
+      ]),
+      root
+    );
+
+    this.board = this.node.querySelector('#board');
+    this.hud = this.node.querySelector('#hud');
+    this.chat = this.node.querySelector('#chat');
+    this.gameOver = this.node.querySelector('#game-over');
+    this.onLeave = null;
+  }
+
+  show() {
+    this.node.classList.remove('hidden');
+  }
+
+  hide() {
+    this.node.classList.add('hidden');
+  }
+}

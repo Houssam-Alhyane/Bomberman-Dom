@@ -1,0 +1,244 @@
+/* Lobby + nickname screens (classes come from LobbyView.js / NicknameScreen.js). */
+
+#app {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+}
+
+.lobby {
+    width: min(420px, 100%);
+}
+
+.lobby.hidden {
+    display: none;
+}
+
+.lobby-box {
+    padding: 32px 28px;
+    text-align: center;
+    background: #182029;
+    border: 1px solid #26323d;
+    border-radius: 18px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+
+/* Title and mascots */
+.lobby-mascots {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    font-size: 2rem;
+    line-height: 1;
+}
+
+.bomb {
+    display: inline-block;
+    animation: bob 2.4s ease-in-out infinite;
+}
+
+.bomb-2 {
+    animation-delay: 0.3s;
+}
+
+.bomb-3 {
+    animation-delay: 0.6s;
+}
+
+@keyframes bob {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-6px);
+    }
+}
+
+.lobby-title {
+    margin: 0 0 6px;
+    font-size: 1.9rem;
+    letter-spacing: 0.04em;
+}
+
+.lobby-title span:first-child {
+    color: #ff5252;
+}
+
+.lobby-title span:last-child {
+    color: #00e676;
+}
+
+.lobby-status {
+    margin: 6px 0;
+    color: #9fb0c0;
+}
+
+.lobby-error {
+    min-height: 1.2em;
+    margin: 6px 0;
+    color: #ff5252;
+    font-size: 0.9rem;
+}
+
+/* Buttons */
+.btn {
+    padding: 12px 16px;
+    font-weight: 700;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.btn:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+.btn-primary {
+    color: #06231a;
+    background: #00e676;
+}
+
+.btn-primary:hover:not(:disabled),
+.btn-primary:focus-visible {
+    background: #33eb8f;
+}
+
+.btn-secondary {
+    color: #e8eef5;
+    background: #26323d;
+}
+
+.btn-secondary:hover:not(:disabled),
+.btn-secondary:focus-visible {
+    background: #33424f;
+}
+
+.btn-block {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+}
+
+.btn-small {
+    padding: 8px 14px;
+    font-size: 0.85rem;
+}
+
+/* Nickname form */
+.lobby-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.lobby-form input {
+    width: 100%;
+    padding: 12px 14px;
+    color: inherit;
+    background: #0f141a;
+    border: 1px solid #33424f;
+    border-radius: 10px;
+}
+
+.lobby-form input:focus {
+    outline: 2px solid #00e676;
+    border-color: transparent;
+}
+
+.lobby-form input:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+/* Room list */
+.lobby-join {
+    margin-top: 14px;
+}
+
+.rooms-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0 0 12px;
+    padding: 0;
+    list-style: none;
+    max-height: 240px;
+    overflow-y: auto;
+}
+
+.room-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    text-align: left;
+    background: #0f141a;
+    border: 1px solid #26323d;
+    border-radius: 12px;
+}
+
+.room-info {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+}
+
+.room-name {
+    font-weight: 700;
+    color: #e8eef5;
+}
+
+.room-host,
+.room-count {
+    color: #9fb0c0;
+    font-size: 0.82rem;
+    white-space: nowrap;
+}
+
+.rooms-empty {
+    padding: 16px;
+    color: #9fb0c0;
+    background: #0f141a;
+    border: 1px dashed #33424f;
+    border-radius: 12px;
+}
+
+/* Room view */
+.lobby-room {
+    margin-top: 14px;
+}
+
+.room-title {
+    margin: 0 0 6px;
+    color: #00e676;
+}
+
+.room-hint,
+.room-state {
+    margin: 4px 0;
+    color: #9fb0c0;
+}
+
+.room-players {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 12px 0;
+    padding: 0;
+    list-style: none;
+    text-align: left;
+}
+
+.room-player {
+    padding: 10px 12px;
+    background: #0f141a;
+    border: 1px solid #26323d;
+    border-radius: 10px;
+}

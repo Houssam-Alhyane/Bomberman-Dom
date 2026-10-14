@@ -1,31 +1,45 @@
 export class GameState {
-    constructor() {
-        this.players = new Map(); 
-        
-        this.bombs = []; 
-        this.explosions = []; 
-        this.powerUps = []; 
-        
-        this.map = {
-            width: 15,
-            height: 13,
-            grid: []
-        };
-        
-        this.status = 'LOBBY'; 
-    }
+  constructor() {
+    this.status = 'LOBBY';
+    this.localPlayerId = null;
+    this.seed = null;
+    this.map = null;
 
-    updatePlayer(id, data) {
-        if (this.players.has(id)) {
-            const player = this.players.get(id);
+    // Active entities.
+    this.players = new Map();
+    this.bombs = [];
+    this.explosions = [];
+    this.powerUps = [];
+  }
 
-            Object.assign(player, data); 
-        } else {
-            this.players.set(id, data); 
-        }
+  // Add or update a player by ID.
+  updatePlayer(id, data) {
+    if (this.players.has(id)) {
+      Object.assign(this.players.get(id), data);
+    } else {
+      this.players.set(id, { id, ...data });
     }
+  }
 
-    removePlayer(id) {
-        this.players.delete(id);
-    }
+  // Remove a player who left or died.
+  removePlayer(id) {
+    this.players.delete(id);
+  }
+
+  // Store the active map instance.
+  setMap(map) {
+    this.map = map;
+  }
+
+  // Reset all state when leaving or restarting a match.
+  reset() {
+    this.status = 'LOBBY';
+    this.localPlayerId = null;
+    this.seed = null;
+    this.map = null;
+    this.players.clear();
+    this.bombs = [];
+    this.explosions = [];
+    this.powerUps = [];
+  }
 }
