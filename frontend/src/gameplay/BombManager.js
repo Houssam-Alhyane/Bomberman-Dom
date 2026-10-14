@@ -1,6 +1,7 @@
 import { TILE_SIZE, PLAYER_SIZE } from '../world/map/Map.js';
 import { Bomb } from './Bomb.js';
 import { Explosion } from './Explosion.js';
+import { DamageSystem } from './DamageSystem.js';
 
 // fixed rule values agreed for the team.
 const BOMB_TIMER = 3000;
@@ -11,6 +12,7 @@ export class BombManager {
   constructor() {
     this.nextId = 1;
     this.eventHandler = null;
+    this.damage = new DamageSystem();
   }
 
   // register the outgoing fact handler, wired to the socket elsewhere.
@@ -82,6 +84,9 @@ export class BombManager {
       state.explosions.push(new Explosion(this.newId('exp'), tile.x, tile.y, EXPLOSION_DURATION));
       if (map.isBlock(tile.x, tile.y)) this.destroyBlock(state, map, tile);
     });
+
+    // one explosion is a single event, so each covered player loses one life
+    this.damage.apply(state.players.values(), covered);
   }
 
   // remove a broken block and maybe leave a power-up behind.
