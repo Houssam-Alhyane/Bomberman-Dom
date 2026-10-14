@@ -81,6 +81,11 @@ export class GameEngine {
 
     if (!player || !this.state.map) return;
 
+    // a fresh space press places a bomb on the local player's tile
+    if (this.input.consumeBomb()) {
+      this.gameplay?.placeBomb(player, this.state);
+    }
+
     const { dx, dy } = this.input.getDirection();
     if (!dx && !dy) return;
 
