@@ -16,6 +16,7 @@ export class GameEngine {
     this.players = new PlayerManager();
     this.input = new Input();
     this.onMove = null;
+    this.gameplay = null;
 
     this.loop = new GameLoop(
       () => this.update(),
@@ -72,8 +73,12 @@ export class GameEngine {
   }
 
   // Move only the local player and report it so it can be broadcast.
-  update() {
+  update(frameTime) {
     const player = this.state.players.get(this.state.localPlayerId);
+
+    // gameplay logic ticks every fixed step, even before a player exists
+    this.gameplay?.update(frameTime, this.state, this.state.map);
+
     if (!player || !this.state.map) return;
 
     const { dx, dy } = this.input.getDirection();
