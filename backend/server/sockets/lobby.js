@@ -32,7 +32,28 @@ function joinLobby(players, player, nickname) {
     nickname: cleanNickname,
   };
 }
+function checknickname(players, nickname) {
+  const cleanNickname = nickname.trim();
+
+  const nicknameExists = players.some(
+    (other) =>
+      other.nickname &&
+      other.nickname.toLowerCase() === cleanNickname.toLowerCase(),
+  );
+
+  if (nicknameExists) {
+    return {
+      success: false,
+      message: 'Nickname already exists',
+    };
+  }
+  return {
+    success: true,
+    nickname: cleanNickname,
+  };
+}
 
 module.exports = {
   joinLobby,
+  checknickname,
 };

@@ -3,11 +3,10 @@ const Room = require('./room');
 class RoomManager {
   constructor() {
     this.rooms = new Map();
-    this.nextRoomId = 1;
   }
 
   createRoom() {
-    const id = this.nextRoomId++;
+    const id = this.nextId();
     const room = new Room();
 
     room.id = id;
@@ -15,6 +14,16 @@ class RoomManager {
 
     this.rooms.set(id, room);
     return room;
+  }
+
+  //smallest number not in use, so rooms always start at 1 and freed numbers
+  //are reused (the list stays 1..N instead of counting up forever)
+  nextId() {
+    let id = 1;
+    while (this.rooms.has(id)) {
+      id += 1;
+    }
+    return id;
   }
 
   getRoom(roomId) {

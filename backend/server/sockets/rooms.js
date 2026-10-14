@@ -1,5 +1,5 @@
 const { send, broadcast, broadcastToRoom } = require('./broadcast');
-
+const { checkNickname } = require('./nickname');
 //get a list of players in a room with their id and nickname
 function getRoomPlayers(room) {
   return room.players.map((player) => ({
@@ -91,6 +91,10 @@ function joinRoom(socket, wss, player, roomManager, roomId) {
       type: 'error',
       message: room.isFull() ? `${room.name} is full` : 'Game already started',
     });
+    return;
+  }
+  if (!nicknameCheck.success) {
+    send(socket, { type: 'error', message: nicknameCheck.message });
     return;
   }
 
