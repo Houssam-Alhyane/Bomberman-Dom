@@ -1,7 +1,7 @@
 import { TILE_SIZE, PLAYER_SIZE } from '../world/map/Map.js';
 import { Bomb } from './Bomb.js';
 import { Explosion } from './Explosion.js';
-import { DamageSystem } from './DamageSystem.js';
+import { DamageSystem, isCovered } from './DamageSystem.js';
 import { PowerUp, randomType, shouldDrop } from './PowerUp.js';
 
 // fixed rule values agreed for the team.
@@ -54,6 +54,8 @@ export class BombManager {
 
     state.explosions.forEach((explosion) => explosion.tick(frameTime));
     state.explosions = state.explosions.filter((explosion) => !explosion.expired);
+
+    this.collect(state);
   }
 
   // hand an outgoing fact to the network layer.
@@ -103,5 +105,26 @@ export class BombManager {
     const type = randomType(this.random);
     state.powerUps.push(new PowerUp(this.newId('power'), tile.x, tile.y, type));
     this.emit({ type: 'powerup_spawn', x: tile.x, y: tile.y, powerUpType: type });
+  }
+
+  // a living player standing on a power-up takes it.
+  collect(state) {
+    state.powerUps.slice().forEach((item) => {
+      const player = this.playerOn(state, item.x, item.y);
+      if (!player) return;
+
+      item.applyTo(player);
+      state.powerUps = state.powerUps.filter((other) => other !== item);
+      this.emit({ type: 'powerup_collect', playerId: player.id, x: item.x, y: item.y });
+    });
+  }
+
+  // the first living player standing on a tile.
+  playerOn(state, x, y) {
+    for (const player of state.players.values()) {
+      if (!player.alive) continue;
+      if (isCovered(player, [{ x, y }])) return player;
+    }
+    return null;
   }
 }
