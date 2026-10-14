@@ -6,6 +6,8 @@ export const CLIENT_EVENTS = {
   LEAVE_ROOM: 'leave_room',
   CHAT: 'chat',
   MOVE: 'move',
+  PLACE_BOMB: 'place_bomb',
+  POWERUP_COLLECT: 'powerup_collect',
 };
 
 //message types received from the server, values must match backend broadcast payloads
@@ -20,6 +22,8 @@ export const SERVER_EVENTS = {
   START: 'start',
   CHAT: 'chat',
   PLAYER_MOVED: 'player_moved',
+  POWERUP_SPAWN: 'powerup_spawn',
+  GAME_OVER: 'game_over',
 };
 
 //connection lifecycle, handled inside WebSocketClient instead of the wire protocol
