@@ -19,6 +19,10 @@ export default class ChatBox {
     this.onToggle?.(isOpen);
   }
 
+  close() {
+    if (this.state.get().isOpen) this.toggle();
+  }
+
   add(entry) {
     const messages = [...this.state.get().messages, entry].slice(-30);
     this.state.set({ ...this.state.get(), messages, error: null });
