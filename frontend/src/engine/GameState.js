@@ -10,6 +10,7 @@ export class GameState {
     this.bombs = [];
     this.explosions = [];
     this.powerUps = [];
+    this.winner = null;
   }
 
   // Add or update a player by ID.
@@ -41,5 +42,6 @@ export class GameState {
     this.bombs = [];
     this.explosions = [];
     this.powerUps = [];
+    this.winner = null;
   }
 }
