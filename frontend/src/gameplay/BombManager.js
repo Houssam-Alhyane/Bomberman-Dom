@@ -1,8 +1,10 @@
 import { TILE_SIZE, PLAYER_SIZE } from '../world/map/Map.js';
 import { Bomb } from './Bomb.js';
+import { Explosion } from './Explosion.js';
 
 // fixed rule values agreed for the team.
 const BOMB_TIMER = 3000;
+const EXPLOSION_DURATION = 500;
 
 // the single front door for bombs, explosions, damage, power-ups and winner.
 export class BombManager {
@@ -30,6 +32,25 @@ export class BombManager {
     this.emit({ type: 'place_bomb', playerId: player.id, x: tile.x, y: tile.y, range: player.flameRange });
   }
 
+  // advance bombs, explosions, drops, hits and the winner by one fixed step.
+  update(frameTime, state, map) {
+    if (!state || !map) return;
+
+    const detonated = [];
+    state.bombs.forEach((bomb) => {
+      bomb.tick(frameTime);
+      if (bomb.expired) detonated.push(bomb);
+    });
+    if (detonated.length) {
+      state.bombs = state.bombs.filter((bomb) => !bomb.expired);
+    }
+
+    detonated.forEach((bomb) => this.detonate(state, map, bomb));
+
+    state.explosions.forEach((explosion) => explosion.tick(frameTime));
+    state.explosions = state.explosions.filter((explosion) => !explosion.expired);
+  }
+
   // hand an outgoing fact to the network layer.
   emit(fact) {
     this.eventHandler?.(fact);
@@ -51,5 +72,22 @@ export class BombManager {
   // count a player's live bombs.
   liveBombs(state, ownerId) {
     return state.bombs.filter((bomb) => bomb.ownerId === ownerId).length;
+  }
+
+  // explode one bomb: cover tiles, break blocks, drop items and hurt players.
+  detonate(state, map, bomb) {
+    const covered = Explosion.cover(bomb.x, bomb.y, bomb.range, map);
+
+    covered.forEach((tile) => {
+      state.explosions.push(new Explosion(this.newId('exp'), tile.x, tile.y, EXPLOSION_DURATION));
+      if (map.isBlock(tile.x, tile.y)) this.destroyBlock(state, map, tile);
+    });
+  }
+
+  // remove a broken block and maybe leave a power-up behind.
+  destroyBlock(state, map, tile) {
+    map.tiles = map.tiles.filter(
+      (entry) => !(entry.type === 'block' && entry.x === tile.x && entry.y === tile.y)
+    );
   }
 }
