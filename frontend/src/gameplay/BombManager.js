@@ -62,6 +62,34 @@ export class BombManager {
     if (detonated.length) this.checkWinner(state);
   }
 
+  // mirror a fact that arrived from the relay.
+  applyRemote(event, state) {
+    if (!event || !state) return;
+
+    if (event.type === 'place_bomb') {
+      const taken = state.bombs.some((bomb) => bomb.x === event.x && bomb.y === event.y);
+      if (!taken) {
+        state.bombs.push(new Bomb(this.newId('bomb'), event.playerId, event.x, event.y, event.range, BOMB_TIMER));
+      }
+      return;
+    }
+
+    if (event.type === 'powerup_spawn') {
+      state.powerUps.push(new PowerUp(this.newId('power'), event.x, event.y, event.powerUpType));
+      return;
+    }
+
+    if (event.type === 'powerup_collect') {
+      state.powerUps = state.powerUps.filter((item) => !(item.x === event.x && item.y === event.y));
+      return;
+    }
+
+    if (event.type === 'game_over') {
+      state.winner = event.winnerId;
+      this.announced = true;
+    }
+  }
+
   // hand an outgoing fact to the network layer.
   emit(fact) {
     this.eventHandler?.(fact);
