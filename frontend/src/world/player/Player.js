@@ -9,6 +9,8 @@ export class Player {
         this.lives = 3
         this.alive = true
         this.speed = 1
+        this.bombs = 1
+        this.flameRange = 1
     }
 
     // dx = 1 == -> && dx = -1 === <-
