@@ -5,11 +5,18 @@ import { TILE_SIZE, PLAYER_SIZE } from '../world/map/Map.js';
 const PLAYER_COLORS = ['#e53935', '#1e88e5', '#43a047', '#fdd835'];
 
 // Renders the game board and entities into the DOM using the mini-framework.
+// All moving elements use translate3d() exclusively for GPU-accelerated compositing.
 export class Renderer {
   constructor(container) {
     this.container = container;
     this.vnode = null;
     this.domNode = null;
+
+    // Cache: tiles never move, so build their vnodes once.
+    this._tileVNodes = null;
+
+    // Direct DOM references for players — bypasses VDOM for the hottest path.
+    this._playerEls = new Map();
   }
 
   // Render or patch the current game state.
@@ -20,11 +27,35 @@ export class Renderer {
 
     if (!this.domNode) {
       this.domNode = render(newVNode, this.container);
+      this._cachePlayerEls();
     } else {
       patch(this.vnode, newVNode, this.domNode);
+      // Fast path: write player transforms directly to DOM, skip VDOM diff.
+      this._updatePlayerTransforms(state.players);
     }
 
     this.vnode = newVNode;
+  }
+
+  // Write player positions directly to cached DOM elements (GPU composited).
+  _updatePlayerTransforms(players) {
+    const list = players instanceof Map ? players : new Map();
+    for (const [id, player] of list) {
+      const el = this._playerEls.get(id) || this.domNode?.querySelector(`[data-pid="${id}"]`);
+      if (el) {
+        el.style.transform = `translate3d(${player.x}px,${player.y}px,0)`;
+        this._playerEls.set(id, el);
+      }
+    }
+  }
+
+  // Cache player DOM elements after initial render.
+  _cachePlayerEls() {
+    if (!this.domNode) return;
+    this._playerEls.clear();
+    for (const el of this.domNode.querySelectorAll('[data-pid]')) {
+      this._playerEls.set(el.dataset.pid, el);
+    }
   }
 
   // Build the complete Virtual DOM tree for the game board.
@@ -36,8 +67,13 @@ export class Renderer {
     const width = state.map.width * TILE_SIZE;
     const height = state.map.height * TILE_SIZE;
 
+    // Cache tile vnodes — they never change after map generation.
+    if (!this._tileVNodes) {
+      this._tileVNodes = this.renderTiles(state.map.tiles);
+    }
+
     const children = [
-      ...this.renderTiles(state.map.tiles),
+      ...this._tileVNodes,
       ...this.renderPowerUps(state.powerUps),
       ...this.renderBombs(state.bombs),
       ...this.renderExplosions(state.explosions),
@@ -55,7 +91,7 @@ export class Renderer {
     );
   }
 
-  // Render map tiles (walls and blocks).
+  // Render map tiles — static, built once.
   renderTiles(tiles = []) {
     return tiles.map((tile) =>
       h('div', {
@@ -105,7 +141,7 @@ export class Renderer {
     });
   }
 
-  // Render all active players.
+  // Render all active players — uses data-pid for direct DOM access.
   renderPlayers(players, localId) {
     const list = players instanceof Map ? Array.from(players.values()) : (players || []);
 
@@ -116,6 +152,7 @@ export class Renderer {
 
       return h('div', {
         key: `player-${player.id}`,
+        'data-pid': String(player.id),
         class: `player ${isDead ? 'dead' : ''} ${isLocal ? 'local' : ''}`.trim(),
         style: `width:${PLAYER_SIZE}px;height:${PLAYER_SIZE}px;background:${color};transform:translate3d(${player.x}px,${player.y}px,0);`,
       });
@@ -129,5 +166,7 @@ export class Renderer {
       this.domNode = null;
       this.vnode = null;
     }
+    this._tileVNodes = null;
+    this._playerEls.clear();
   }
 }

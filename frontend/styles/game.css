@@ -4,10 +4,11 @@
     border: 4px solid #1b5e20;
     margin: 20px auto;
     overflow: hidden;
+    contain: layout style;
 }
 
-/* Every entity is placed with translate3d, so it must be absolutely positioned.
-   Scoped to #game-board so lobby mascots (which reuse .bomb) are unaffected. */
+/* Every entity uses translate3d for GPU-composited positioning.
+   contain isolates reflow/repaint to each element. */
 #game-board .tile,
 #game-board .player,
 #game-board .bomb,
@@ -17,6 +18,16 @@
     top: 0;
     left: 0;
     box-sizing: border-box;
+    contain: layout style paint;
+    backface-visibility: hidden;
+}
+
+/* Only moving entities get their own compositor layer.
+   Tiles are static — promoting them would waste GPU memory. */
+#game-board .player,
+#game-board .bomb,
+#game-board .explosion {
+    will-change: transform;
 }
 
 .tile.wall {
