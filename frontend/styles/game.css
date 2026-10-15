@@ -147,6 +147,21 @@
     font-size: 0.85rem;
 }
 
+.hud-label {
+    color: #9fb0c0;
+}
+
+.hud-stats {
+    color: #9fb0c0;
+    font-size: 0.85rem;
+    white-space: nowrap;
+}
+
+.countdown {
+    color: #00e676;
+    font-weight: 700;
+}
+
 .hud-value {
     color: #00e676;
     font-weight: 700;

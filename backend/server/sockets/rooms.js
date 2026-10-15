@@ -1,5 +1,6 @@
 const { send, broadcast, broadcastToRoom } = require('./broadcast');
 const { checkNickname } = require('./nickname');
+const { getPlayerList } = require('./state');
 //get a list of players in a room with their id and nickname
 function getRoomPlayers(room) {
   return room.players.map((player) => ({
@@ -78,6 +79,8 @@ function joinRoom(socket, wss, player, roomManager, roomId) {
   if (isAlreadyInRoom(socket, player)) {
     return;
   }
+
+  const nicknameCheck = checkNickname(getPlayerList(), player, player.nickname);
 
   const room = roomManager.getRoom(roomId);
 

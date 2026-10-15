@@ -28,7 +28,8 @@ export default class HUD {
     const { players, localPlayerId, maxPlayers, countdown, fps = 0, frameTime = 0 } = this.data;
 
     const meta = [
-      h('span', { class: 'hud-label' }, ['Players']), // 3/4 players
+      h('span', { class: 'hud-label' }, ['Players']),
+      renderPlayerCounter(players.length, maxPlayers),
     ];
     if (countdown != null) meta.push(renderCountdown(countdown));
 

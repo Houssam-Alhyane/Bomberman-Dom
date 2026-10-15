@@ -78,6 +78,13 @@ chat = new Chat({
 // Local moves go to the server; remote moves are bound per match in startMatch.
 engine.onMove = (player) => client.send({ type: 'move', x: player.x, y: player.y });
 engine.onStats = (stats) => hud.update({ fps: stats.fps, frameTime: stats.frameTime });
+// Lives and alive flags change while the match runs.
+engine.onPlayers = (players) => hud.update({ players });
+// The engine tells us once when the match is decided.
+engine.onWinner = (winnerId) => {
+  const winner = engine.state.players.get(winnerId);
+  gameOver.show(winner ? winner.nickname : null);
+};
 
 client.on(SERVER_EVENTS.START, (msg) => startMatch(msg));
 client.on(SERVER_EVENTS.LEFT_ROOM, () => returnToLobby());
@@ -105,10 +112,11 @@ function startMatch(msg) {
   engine.start();
 
   // Remote moves only matter while this match is live, so bind them per match.
+  // Our own move comes back too, so we ignore it to avoid rubber-banding.
   matchHandlers.push(
-    client.on(SERVER_EVENTS.PLAYER_MOVED, (m) =>
-      engine.setPlayerPosition(m.playerId, m.x, m.y)
-    )
+    client.on(SERVER_EVENTS.PLAYER_MOVED, (m) => {
+      if (m.playerId !== me.id) engine.setPlayerPosition(m.playerId, m.x, m.y);
+    })
   );
 
   hud.update({
@@ -128,7 +136,6 @@ function detachMatchHandlers() {
 // screen instead of the lobby.
 function teardownMatch() {
   engine.destroy();
-  engine.onMove = null;
   detachMatchHandlers();
   chat.setLocked(true);
   chat.clear();

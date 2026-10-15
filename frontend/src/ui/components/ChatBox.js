@@ -46,7 +46,7 @@ export default class ChatBox {
 
   view() {
     const { messages, isOpen, error } = this.state.get();
-
+    
     return h('div', { class: `chat-modal-wrapper ${isOpen ? 'active' : 'hidden'}` }, [
       h('div', { class: 'chat-window' }, [
         h('div', { class: 'chat-header' }, [
@@ -61,7 +61,8 @@ export default class ChatBox {
         )),
         h('p', { class: 'chat-error' }, [error || '']),
         h('form', { class: 'chat-form', onSubmit: (e) => this.submit(e) }, [
-          h('input', { class: 'chat-input', type: 'text', placeholder: 'Type a message...' }),
+          // Keep game keys (space, arrows) away from the game input handler.
+          h('input', { class: 'chat-input', type: 'text', placeholder: 'Type a message...', onKeydown: (e) => e.stopPropagation() }),
           h('button', { type: 'submit' }, ['Send'])
         ])
       ])
