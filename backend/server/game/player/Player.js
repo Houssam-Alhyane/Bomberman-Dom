@@ -1,6 +1,4 @@
-import { Map } from "../map/Map.js"
-
-export class Player {
+class Player {
     constructor(id, nickname, x, y) {
         this.id = id
         this.nickname = nickname
@@ -9,8 +7,6 @@ export class Player {
         this.lives = 3
         this.alive = true
         this.speed = 1
-        this.bombs = 1
-        this.flameRange = 1
     }
 
     // dx = 1 == -> && dx = -1 === <-
@@ -28,3 +24,4 @@ export class Player {
 
 }
 
+module.exports = { Player };

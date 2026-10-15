@@ -1,7 +1,7 @@
-export const TILE_SIZE = 50;
-export const PLAYER_SIZE = 25;
+const TILE_SIZE = 50;
+const PLAYER_SIZE = 25;
 
-export class Map {
+class Map {
     constructor(width, height) {
         this.width = width;
         this.height = height;
@@ -124,7 +124,7 @@ export class Map {
 }
 
 
-
+module.exports = { Map, TILE_SIZE, PLAYER_SIZE };
 
 
 
