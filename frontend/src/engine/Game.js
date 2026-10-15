@@ -24,12 +24,11 @@ export class GameEngine {
     );
   }
 
-  init(container, { localPlayerId = 'local', players = [], seed = 1 } = {}) {
+  init(container, { localPlayerId = 'local', players = [], map = [] } = {}) {
     this.destroy();
     this.state.reset();
     this.state.localPlayerId = localPlayerId;
-    this.state.seed = seed;
-    this.state.setMap(new Map(GRID_WIDTH, GRID_HEIGHT, seed));
+    this.state.setMap(new Map(GRID_WIDTH, GRID_HEIGHT, map));
 
     // Fresh player list and key state for this match.
     this.players = new PlayerManager();

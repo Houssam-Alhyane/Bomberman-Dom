@@ -62,7 +62,7 @@ function createRoom(socket, wss, player, roomManager) {
     broadcastToRoom(room, {
       type: 'start',
       players: getRoomPlayers(room),
-      seed: room.id, //shared seed so every client builds the same map
+      map: room.map.tiles, //server-generated map, shared by all clients
     });
   };
 

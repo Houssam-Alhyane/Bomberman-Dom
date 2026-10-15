@@ -60,6 +60,9 @@ rooms = new Rooms({
   onError: (message) => chat.onError?.(message),
 });
 
+// The in-game "Leave" button has to be told what to do.
+gameScreen.onLeave = () => rooms?.leave();
+
 chat = new Chat({
   client,
   onMessage: (entry) => chatBox.add(entry),
@@ -72,8 +75,18 @@ client.on(SERVER_EVENTS.PLAYER_MOVED, (msg) =>
   engine.setPlayerPosition(msg.playerId, msg.x, msg.y)
 );
 
+// The server rejected a move and sent its authoritative position: snap back.
+client.on(SERVER_EVENTS.ERROR, (msg) => {
+  if (typeof msg.x === 'number' && typeof msg.y === 'number') {
+    engine.setPlayerPosition(me.id, msg.x, msg.y);
+  }
+});
+
 client.on(SERVER_EVENTS.START, (msg) => startMatch(msg));
-client.on(SERVER_EVENTS.LEFT_ROOM, () => backToLobby());
+client.on(SERVER_EVENTS.LEFT_ROOM, () => {
+  backToLobby();
+  lobby.show(me); // reveal the lobby again after leaving a room
+});
 client.on(CONNECTION_EVENTS.CLOSE, () => backToLobby());
 
 function startMatch(msg) {
@@ -85,13 +98,11 @@ function startMatch(msg) {
   chat.setSelfId(me.id);
   chat.setLocked(false);
 
-  // The server sends the shared seed so every client builds the same map.
-  const seed = msg.seed ?? msg.gameState?.seed;
-
+  // The server sends the shared map so every client renders the same board.
   engine.init(gameScreen.board, {
     localPlayerId: me.id,
     players: msg.players,
-    seed,
+    map: msg.map,
   });
   engine.start();
 
@@ -111,5 +122,3 @@ function backToLobby() {
 
 client.connect();
 
-// Debug handle.
-window.__APP__ = { client, engine, lobby, rooms, chat };
