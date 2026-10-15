@@ -1,7 +1,17 @@
+const { GameMap, TILE_SIZE } = require('./map');
+
 const MAX_PLAYERS = 4;
 const MIN_PLAYERS = 2;
 const WAIT_TIMER_DURATION = 20 * 1000; // 20 seconds
 const READY_TIMER_DURATION = 10 * 1000; // 10 seconds
+
+// same spawn tiles as the frontend PlayerManager
+const SPAWNS = [
+  { x: 1, y: 1 },
+  { x: 13, y: 1 },
+  { x: 1, y: 11 },
+  { x: 13, y: 11 },
+];
 
 // states: waiting -> waitCountdown (20s) -> startCountdown (10s) -> playing
 class Room {
@@ -20,6 +30,8 @@ class Room {
 
     this.onStateChange = null; // set when the room is created, called when the state changes
     this.onGameStart = null; // set when starting a game, called when the game starts
+
+    this.map = null; // server map, built when the game starts
   }
 
   get hostId() {
@@ -173,10 +185,23 @@ class Room {
       this.startGame();
     }, READY_TIMER_DURATION);
   }
-//start the game, clear timers, change state to playing, and call onGameStart callback
+  //start the game, clear timers, change state to playing, and call onGameStart callback
   startGame() {
     this.clearTimers();
     this.state = 'playing';
+
+    // build the map on the server; clients receive it in the start message
+    this.map = new GameMap(15, 13, this.id);
+
+    // give each player their spawn (same order as the frontend PlayerManager)
+
+    this.players.forEach((player, index) => {
+      const spawn = SPAWNS[index];
+
+      player.x = spawn.x * TILE_SIZE;
+      player.y = spawn.y * TILE_SIZE;
+    });
+
     this.emitStateChange();
 
     if (this.onGameStart) {

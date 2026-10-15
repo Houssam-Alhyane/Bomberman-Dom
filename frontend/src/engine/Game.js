@@ -51,13 +51,14 @@ export class GameEngine {
     );
   }
 
-  init(container, { localPlayerId = 'local', players = [], seed = 1, wsClient = null } = {}) {
+  init(container, { localPlayerId = 'local', players = [], map = [], wsClient = null } = {}) {
     this.destroy();
     this.state.reset();
     this.state.localPlayerId = localPlayerId;
-    this.state.seed = seed;
     if (wsClient) this.wsClient = wsClient;
-    this.state.setMap(new Map(GRID_WIDTH, GRID_HEIGHT, seed));
+    // The server owns the map: it sends the tiles with the start message so
+    // every client renders the exact same board.
+    this.state.setMap(new Map(GRID_WIDTH, GRID_HEIGHT, map));
 
     // Fresh player list and key state for this match.
     this.players = new PlayerManager();
