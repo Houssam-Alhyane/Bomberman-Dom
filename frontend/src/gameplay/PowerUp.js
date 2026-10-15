@@ -12,9 +12,9 @@ export class PowerUp {
 
   // raise the matching player stat by one step.
   applyTo(player) {
-    if (this.type === 'bomb') player.bombs += 1;
-    if (this.type === 'flame') player.flameRange += 1;
-    if (this.type === 'speed') player.speed += 1;
+    if (this.type === 'bomb') player.addBomb();
+    if (this.type === 'flame') player.addFlame();
+    if (this.type === 'speed') player.addSpeed();
   }
 }
 
