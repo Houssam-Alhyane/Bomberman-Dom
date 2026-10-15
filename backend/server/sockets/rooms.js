@@ -149,24 +149,10 @@ function leaveRoom(socket, wss, player, roomManager) {
   send(socket, { type: 'left_room' });
 }
 
-//end the game and drop the room from the lobby list
-//after endGame the room is empty and back in 'waiting', but nobody plays in it anymore
-function endRoomGame(wss, room, roomManager) {
-  const roomName = room.name;
-
-  room.endGame();
-  roomManager.removeRoom(room.id);
-
-  console.log(`${roomName} removed - game finished`);
-
-  broadcastRooms(wss, roomManager);
-}
-
 module.exports = {
   createRoom,
   joinRoom,
   leaveRoom,
   removeFromRoom,
-  endRoomGame,
   broadcastRooms,
 };

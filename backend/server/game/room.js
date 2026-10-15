@@ -185,7 +185,7 @@ class Room {
       this.startGame();
     }, READY_TIMER_DURATION);
   }
-//start the game, clear timers, change state to playing, and call onGameStart callback
+  //start the game, clear timers, change state to playing, and call onGameStart callback
   startGame() {
     this.clearTimers();
     this.state = 'playing';
@@ -194,8 +194,10 @@ class Room {
     this.map = new GameMap(15, 13, this.id);
 
     // give each player their spawn (same order as the frontend PlayerManager)
+
     this.players.forEach((player, index) => {
-      const spawn = SPAWNS[index % SPAWNS.length];
+      const spawn = SPAWNS[index];
+
       player.x = spawn.x * TILE_SIZE;
       player.y = spawn.y * TILE_SIZE;
     });
