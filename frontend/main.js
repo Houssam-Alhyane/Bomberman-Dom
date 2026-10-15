@@ -15,20 +15,29 @@ const root = document.getElementById('app');
 
 const client = new WebSocketClient();
 const engine = new GameEngine();
+engine.wsClient = client;
 
 let me = { id: null, nickname: '' };
 let chat = null;
 let rooms = null;
 let nicknameFlow = null;
+let matchHandlers = []; // unsubscribe functions for the active match's WebSocket events
 
 const nickname = new NicknameScreen({
   onSubmit: (value) => nicknameFlow.submit(value),
 });
 
-const gameScreen = new GameScreen(root);
+const gameScreen = new GameScreen(root, { onLeave: () => leaveGame() });
 const hud = new HUD(gameScreen.hud);
-const chatBox = new ChatBox(gameScreen.chat, { onSend: (text) => chat?.send(text) });
-const gameOver = new GameOverScreen(gameScreen.gameOver, { onLeave: () => rooms?.leave() });
+const chatBox = new ChatBox(gameScreen.chat, {
+  onSend: (text) => chat?.send(text),
+  onToggle: (isOpen) => {
+    engine.chatOpen = isOpen;
+    if (isOpen) engine.input.reset();
+  },
+});
+gameScreen.onToggleChat = () => chatBox.toggle();
+const gameOver = new GameOverScreen(gameScreen.gameOver, { onLeave: () => leaveGame() });
 
 const lobby = new LobbyScreen({
   onHost: () => rooms?.host(),
@@ -66,21 +75,20 @@ chat = new Chat({
   onError: (text) => chatBox.setError(text),
 });
 
-// Local moves go to the server, remote moves come back and update the board.
+// Local moves go to the server; remote moves are bound per match in startMatch.
 engine.onMove = (player) => client.send({ type: 'move', x: player.x, y: player.y });
-client.on(SERVER_EVENTS.PLAYER_MOVED, (msg) =>
-  engine.setPlayerPosition(msg.playerId, msg.x, msg.y)
-);
+engine.onStats = (stats) => hud.update({ fps: stats.fps, frameTime: stats.frameTime });
 
 client.on(SERVER_EVENTS.START, (msg) => startMatch(msg));
-client.on(SERVER_EVENTS.LEFT_ROOM, () => backToLobby());
-client.on(CONNECTION_EVENTS.CLOSE, () => backToLobby());
+client.on(SERVER_EVENTS.LEFT_ROOM, () => returnToLobby());
+client.on(CONNECTION_EVENTS.CLOSE, () => teardownMatch());
 
 function startMatch(msg) {
+  detachMatchHandlers();
+
   lobby.hide();
   nickname.hide();
   gameScreen.show();
-  chatBox.show();
 
   chat.setSelfId(me.id);
   chat.setLocked(false);
@@ -92,8 +100,16 @@ function startMatch(msg) {
     localPlayerId: me.id,
     players: msg.players,
     seed,
+    wsClient: client,
   });
   engine.start();
+
+  // Remote moves only matter while this match is live, so bind them per match.
+  matchHandlers.push(
+    client.on(SERVER_EVENTS.PLAYER_MOVED, (m) =>
+      engine.setPlayerPosition(m.playerId, m.x, m.y)
+    )
+  );
 
   hud.update({
     players: [...engine.state.players.values()],
@@ -101,12 +117,38 @@ function startMatch(msg) {
   });
 }
 
-function backToLobby() {
+// Stop listening to the current match's server events.
+function detachMatchHandlers() {
+  matchHandlers.forEach((off) => off());
+  matchHandlers = [];
+}
+
+// Stop the game loop, detach match listeners, and hide the game UI.
+// Navigation is left to the caller so a dropped socket can go to the nickname
+// screen instead of the lobby.
+function teardownMatch() {
   engine.destroy();
+  engine.onMove = null;
+  detachMatchHandlers();
   chat.setLocked(true);
-  chatBox.hide();
+  chat.clear();
+  chatBox.close();
   gameOver.hide();
   gameScreen.hide();
+}
+
+// Return to a usable screen: never leave the player on a blank/black page.
+function returnToLobby() {
+  teardownMatch();
+
+  if (me.id) lobby.show(me);
+  else nickname.show();
+}
+
+// The Leave button: tell the server to release our slot, then go back locally.
+function leaveGame() {
+  rooms?.leave();
+  returnToLobby();
 }
 
 client.connect();

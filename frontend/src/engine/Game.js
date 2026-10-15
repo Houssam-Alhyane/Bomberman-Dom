@@ -15,8 +15,14 @@ export class GameEngine {
     this.renderer = null;
     this.players = new PlayerManager();
     this.input = new Input();
+    this.wsClient = null;
+    this.chatOpen = false;
     this.onMove = null;
+<<<<<<< HEAD
     this.gameplay = null;
+=======
+    this.onStats = null;
+>>>>>>> abouzerd/dom-engine
 
     this.loop = new GameLoop(
       () => this.update(),
@@ -25,11 +31,12 @@ export class GameEngine {
     );
   }
 
-  init(container, { localPlayerId = 'local', players = [], seed = 1 } = {}) {
+  init(container, { localPlayerId = 'local', players = [], seed = 1, wsClient = null } = {}) {
     this.destroy();
     this.state.reset();
     this.state.localPlayerId = localPlayerId;
     this.state.seed = seed;
+    if (wsClient) this.wsClient = wsClient;
     this.state.setMap(new Map(GRID_WIDTH, GRID_HEIGHT, seed));
 
     // Fresh player list and key state for this match.
@@ -73,7 +80,8 @@ export class GameEngine {
   }
 
   // Move only the local player and report it so it can be broadcast.
-  update(frameTime) {
+  update() {
+    if (this.chatOpen) return;
     const player = this.state.players.get(this.state.localPlayerId);
 
     // gameplay logic ticks every fixed step, even before a player exists
@@ -99,6 +107,11 @@ export class GameEngine {
 
   // Render the current game state into the DOM.
   render() {
+    const stats = this.performance.getStats();
+
+    this.state.fps = stats.fps;
+    this.state.frameTime = stats.frameTime;
+    this.onStats?.(stats);
     this.renderer?.render(this.state);
   }
 
