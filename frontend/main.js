@@ -69,6 +69,7 @@ chat = new Chat({
 
 // Local moves go to the server; remote moves are bound per match in startMatch.
 engine.onMove = (player) => client.send({ type: 'move', x: player.x, y: player.y });
+engine.onStats = (stats) => hud.update({ fps: stats.fps, frameTime: stats.frameTime });
 
 client.on(SERVER_EVENTS.START, (msg) => startMatch(msg));
 client.on(SERVER_EVENTS.LEFT_ROOM, () => returnToLobby());

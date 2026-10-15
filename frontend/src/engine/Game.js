@@ -18,6 +18,7 @@ export class GameEngine {
     this.wsClient = null;
     this.chatOpen = false;
     this.onMove = null;
+    this.onStats = null;
 
     this.loop = new GameLoop(
       () => this.update(),
@@ -93,6 +94,11 @@ export class GameEngine {
 
   // Render the current game state into the DOM.
   render() {
+    const stats = this.performance.getStats();
+
+    this.state.fps = stats.fps;
+    this.state.frameTime = stats.frameTime;
+    this.onStats?.(stats);
     this.renderer?.render(this.state);
   }
 

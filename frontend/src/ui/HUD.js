@@ -14,6 +14,8 @@ export default class HUD {
       localPlayerId: null,
       maxPlayers: 4,
       countdown: null,
+      fps: 0,
+      frameTime: 0,
     };
   }
 
@@ -23,7 +25,7 @@ export default class HUD {
   }
 
   render() {
-    const { players, localPlayerId, maxPlayers, countdown } = this.data;
+    const { players, localPlayerId, maxPlayers, countdown, fps = 0, frameTime = 0 } = this.data;
 
     const meta = [
       h('span', { class: 'hud-label' }, ['Players']),
@@ -50,6 +52,9 @@ export default class HUD {
         )
       ),
       h('div', { class: 'hud-meta' }, meta),
+      h('div', { class: 'hud-stats' }, [
+        `FPS: ${fps} (${frameTime}ms)`
+      ]),
     ]);
 
     this.node = this.old ? patch(this.old, next, this.node) : render(next, this.container);

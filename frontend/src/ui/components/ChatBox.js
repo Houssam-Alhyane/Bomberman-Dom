@@ -13,18 +13,19 @@ export default class ChatBox {
     this.render();
   }
 
+  // 
   toggle() {
-    const isOpen = !this.state.get().isOpen;
-    this.state.set({ ...this.state.get(), isOpen });
-    this.onToggle?.(isOpen);
+    const isOpen = !this.state.get().isOpen; // reverse value
+    this.state.set({ ...this.state.get(), isOpen }); // update state
+    this.onToggle?.(isOpen); // stop mouvement?
   }
-
+  // if chat is oprn , close it
   close() {
     if (this.state.get().isOpen) this.toggle();
   }
 
   add(entry) {
-    const messages = [...this.state.get().messages, entry].slice(-30);
+    const messages = [...this.state.get().messages, entry].slice(-30);// add new message & show last 30 message
     this.state.set({ ...this.state.get(), messages, error: null });
   }
 
@@ -35,9 +36,9 @@ export default class ChatBox {
   submit(event) {
     event.preventDefault();
     const input = event.currentTarget.querySelector('.chat-input');
-    const text = input.value.trim();
+    const text = input.value.trim(); // if text is plein
     if (text) {
-      this.onSend?.(text);
+      this.onSend?.(text); // send message to server
       input.value = '';
     }
     this.toggle(); 
