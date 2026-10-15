@@ -1,6 +1,5 @@
 import { h, render, patch } from '../../framework/src/index.js';
 
-// End-of-match overlay. Ready for the gameplay module's winner event.
 export default class GameOverScreen {
   constructor(container, { onLeave } = {}) {
     this.container = container;
