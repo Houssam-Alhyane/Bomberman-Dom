@@ -18,11 +18,7 @@ export class GameEngine {
     this.wsClient = null;
     this.chatOpen = false;
     this.onMove = null;
-<<<<<<< HEAD
-    this.gameplay = null;
-=======
     this.onStats = null;
->>>>>>> abouzerd/dom-engine
 
     this.loop = new GameLoop(
       () => this.update(),
