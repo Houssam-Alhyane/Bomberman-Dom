@@ -5,17 +5,18 @@ import { TILE_SIZE, PLAYER_SIZE } from '../world/map/Map.js';
 const PLAYER_COLORS = ['#e53935', '#1e88e5', '#43a047', '#fdd835'];
 
 // Renders the game board and entities into the DOM using the mini-framework.
-// All moving elements use translate3d() exclusively for GPU-accelerated compositing.
+// Everything is positioned with translate3d() for GPU compositing.
 export class Renderer {
   constructor(container) {
     this.container = container;
     this.vnode = null;
     this.domNode = null;
 
-    // Cache: tiles never move, so build their vnodes once.
+    // Tiles are static, so their vnodes are kept until a block breaks.
     this._tileVNodes = null;
+    this._tileCount = null;
 
-    // Direct DOM references for players — bypasses VDOM for the hottest path.
+    // Direct references so player positions skip the virtual DOM.
     this._playerEls = new Map();
   }
 
@@ -25,36 +26,28 @@ export class Renderer {
 
     const newVNode = this.buildView(state);
 
-    if (!this.domNode) {
-      this.domNode = render(newVNode, this.container);
-      this._cachePlayerEls();
-    } else {
-      patch(this.vnode, newVNode, this.domNode);
-      // Fast path: write player transforms directly to DOM, skip VDOM diff.
-      this._updatePlayerTransforms(state.players);
-    }
+    if (this.domNode) patch(this.vnode, newVNode, this.domNode);
+    else this.domNode = render(newVNode, this.container);
 
     this.vnode = newVNode;
+    this.updatePlayerPositions(state.players);
   }
 
-  // Write player positions directly to cached DOM elements (GPU composited).
-  _updatePlayerTransforms(players) {
-    const list = players instanceof Map ? players : new Map();
-    for (const [id, player] of list) {
-      const el = this._playerEls.get(id) || this.domNode?.querySelector(`[data-pid="${id}"]`);
-      if (el) {
-        el.style.transform = `translate3d(${player.x}px,${player.y}px,0)`;
-        this._playerEls.set(id, el);
+  // Write player positions straight to the DOM: translate3d() only.
+  updatePlayerPositions(players) {
+    if (!(players instanceof Map)) return;
+
+    for (const [id, player] of players) {
+      const key = String(id);
+      let el = this._playerEls.get(key);
+
+      // The element can be recreated after a board rebuild, so check it.
+      if (!el || !el.isConnected) {
+        el = this.domNode?.querySelector(`[data-pid="${key}"]`);
+        if (el) this._playerEls.set(key, el);
       }
-    }
-  }
 
-  // Cache player DOM elements after initial render.
-  _cachePlayerEls() {
-    if (!this.domNode) return;
-    this._playerEls.clear();
-    for (const el of this.domNode.querySelectorAll('[data-pid]')) {
-      this._playerEls.set(el.dataset.pid, el);
+      if (el) el.style.transform = `translate3d(${player.x}px, ${player.y}px, 0)`;
     }
   }
 
@@ -64,84 +57,74 @@ export class Renderer {
       return h('div', { id: 'game-board', class: 'hidden', key: 'board' });
     }
 
-    const width = state.map.width * TILE_SIZE;
-    const height = state.map.height * TILE_SIZE;
-
-    // Cache tile vnodes — they never change after map generation.
-    if (!this._tileVNodes) {
+    // Tiles only change when a block is destroyed, so rebuild them only then.
+    if (!this._tileVNodes || this._tileCount !== state.map.tiles.length) {
       this._tileVNodes = this.renderTiles(state.map.tiles);
+      this._tileCount = state.map.tiles.length;
     }
-
-    const children = [
-      ...this._tileVNodes,
-      ...this.renderPowerUps(state.powerUps),
-      ...this.renderBombs(state.bombs),
-      ...this.renderExplosions(state.explosions),
-      ...this.renderPlayers(state.players, state.localPlayerId),
-    ];
 
     return h(
       'div',
       {
         id: 'game-board',
         key: 'board',
-        style: `width:${width}px;height:${height}px;`,
+        style: `width:${state.map.width * TILE_SIZE}px;height:${state.map.height * TILE_SIZE}px;`,
       },
-      children
+      [
+        ...this._tileVNodes,
+        ...this.renderPowerUps(state.powerUps),
+        ...this.renderBombs(state.bombs),
+        ...this.renderExplosions(state.explosions),
+        ...this.renderPlayers(state.players, state.localPlayerId),
+      ]
     );
   }
 
-  // Render map tiles — static, built once.
+  // Render map tiles — static, built once per block change.
   renderTiles(tiles = []) {
     return tiles.map((tile) =>
       h('div', {
         key: `tile-${tile.x}-${tile.y}`,
         class: `tile ${tile.type}`,
-        style: `width:${TILE_SIZE}px;height:${TILE_SIZE}px;transform:translate3d(${tile.x * TILE_SIZE}px,${tile.y * TILE_SIZE}px,0);`,
+        style: `width:${TILE_SIZE}px;height:${TILE_SIZE}px;transform:translate3d(${tile.x * TILE_SIZE}px, ${tile.y * TILE_SIZE}px, 0);`,
       })
     );
   }
 
-  // Render power-up items.
+  // Render power-up items, stored as grid coordinates.
   renderPowerUps(powerUps = []) {
-    return powerUps.map((item, index) => {
-      const x = item.x < 30 ? item.x * TILE_SIZE : item.x;
-      const y = item.y < 30 ? item.y * TILE_SIZE : item.y;
-      return h('div', {
+    return powerUps.map((item, index) =>
+      h('div', {
         key: `powerup-${item.id ?? index}`,
         class: `powerup ${item.type || ''}`.trim(),
-        style: `width:${TILE_SIZE}px;height:${TILE_SIZE}px;transform:translate3d(${x}px,${y}px,0);`,
-      });
-    });
+        style: `width:${TILE_SIZE}px;height:${TILE_SIZE}px;transform:translate3d(${item.x * TILE_SIZE}px, ${item.y * TILE_SIZE}px, 0);`,
+      })
+    );
   }
 
-  // Render active bombs.
+  // Render active bombs, stored as grid coordinates.
   renderBombs(bombs = []) {
-    return bombs.map((bomb, index) => {
-      const x = bomb.x < 30 ? bomb.x * TILE_SIZE : bomb.x;
-      const y = bomb.y < 30 ? bomb.y * TILE_SIZE : bomb.y;
-      return h('div', {
+    return bombs.map((bomb, index) =>
+      h('div', {
         key: `bomb-${bomb.id ?? index}`,
         class: 'bomb',
-        style: `width:${TILE_SIZE}px;height:${TILE_SIZE}px;transform:translate3d(${x}px,${y}px,0);`,
-      });
-    });
+        style: `width:${TILE_SIZE}px;height:${TILE_SIZE}px;transform:translate3d(${bomb.x * TILE_SIZE}px, ${bomb.y * TILE_SIZE}px, 0);`,
+      })
+    );
   }
 
-  // Render explosion blasts.
+  // Render explosion blasts, stored as grid coordinates.
   renderExplosions(explosions = []) {
-    return explosions.map((exp, index) => {
-      const x = exp.x < 30 ? exp.x * TILE_SIZE : exp.x;
-      const y = exp.y < 30 ? exp.y * TILE_SIZE : exp.y;
-      return h('div', {
+    return explosions.map((exp, index) =>
+      h('div', {
         key: `exp-${exp.id ?? index}`,
         class: 'explosion',
-        style: `width:${TILE_SIZE}px;height:${TILE_SIZE}px;transform:translate3d(${x}px,${y}px,0);`,
-      });
-    });
+        style: `width:${TILE_SIZE}px;height:${TILE_SIZE}px;transform:translate3d(${exp.x * TILE_SIZE}px, ${exp.y * TILE_SIZE}px, 0);`,
+      })
+    );
   }
 
-  // Render all active players — uses data-pid for direct DOM access.
+  // Render all active players — their position is written after the patch.
   renderPlayers(players, localId) {
     const list = players instanceof Map ? Array.from(players.values()) : (players || []);
 
@@ -154,7 +137,7 @@ export class Renderer {
         key: `player-${player.id}`,
         'data-pid': String(player.id),
         class: `player ${isDead ? 'dead' : ''} ${isLocal ? 'local' : ''}`.trim(),
-        style: `width:${PLAYER_SIZE}px;height:${PLAYER_SIZE}px;background:${color};transform:translate3d(${player.x}px,${player.y}px,0);`,
+        style: `width:${PLAYER_SIZE}px;height:${PLAYER_SIZE}px;background:${color};`,
       });
     });
   }
@@ -167,6 +150,7 @@ export class Renderer {
       this.vnode = null;
     }
     this._tileVNodes = null;
+    this._tileCount = null;
     this._playerEls.clear();
   }
 }
