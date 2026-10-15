@@ -2,7 +2,6 @@ export class GameState {
   constructor() {
     this.status = 'LOBBY';
     this.localPlayerId = null;
-    this.seed = null;
     this.map = null;
 
     // Active entities.
@@ -36,7 +35,6 @@ export class GameState {
   reset() {
     this.status = 'LOBBY';
     this.localPlayerId = null;
-    this.seed = null;
     this.map = null;
     this.players.clear();
     this.bombs = [];

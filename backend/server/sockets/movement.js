@@ -1,10 +1,35 @@
 const { send, broadcastToRoom } = require('./broadcast');
 
+// A fair client moves 1px per tick (~60px/s, ~85px/s diagonally).
+// MAX_STEP stops a single teleport; MAX_SPEED caps sustained travel per
+// second; MAX_BURST is how much travel can be saved up for a lag spike.
+const MAX_STEP = 25; // largest single move (px)
+const MAX_SPEED = 100; // max sustained travel (px per second)
+const MAX_BURST = 50; // saved-up travel for lag spikes (px)
+
 function isValidPosition(value) {
   return typeof value === 'number' && Number.isFinite(value);
 }
 
-//the server has no map, it just relays a trusted client position to the room
+// Token bucket: refills at MAX_SPEED px/s, never more than one second saved up.
+// Returns false when the move would exceed the allowed travel.
+function travelAllowed(player, distance) {
+  const now = Date.now();
+  const elapsed = now - (player.lastMoveAt || now);
+  player.lastMoveAt = now;
+
+  player.budget = Math.min(
+    MAX_BURST,
+    (player.budget ?? MAX_BURST) + (elapsed / 1000) * MAX_SPEED,
+  );
+
+  if (distance > player.budget) return false;
+
+  player.budget -= distance;
+  return true;
+}
+
+//the server keeps the map and only relays legal positions to the room
 function move(socket, player, roomManager, msg) {
   if (!player.nickname) {
     send(socket, { type: 'error', message: 'Set a nickname first' });
@@ -23,10 +48,40 @@ function move(socket, player, roomManager, msg) {
     return;
   }
 
+  // ignore moves outside a running game
+  if (room.state !== 'playing' || !room.map) {
+    return;
+  }
+
   if (!isValidPosition(msg.x) || !isValidPosition(msg.y)) {
     send(socket, { type: 'error', message: 'Invalid move' });
     return;
   }
+
+  // reject teleports (single move too large)
+  if (
+    Math.abs(msg.x - player.x) > MAX_STEP ||
+    Math.abs(msg.y - player.y) > MAX_STEP
+  ) {
+    send(socket, { type: 'error', message: 'Invalid move', x: player.x, y: player.y });
+    return;
+  }
+
+  // reject moves into walls, blocks or outside the map
+  if (!room.map.canMoveTo(msg.x, msg.y)) {
+    send(socket, { type: 'error', message: 'Invalid move', x: player.x, y: player.y });
+    return;
+  }
+
+  // reject moving faster than the game allows (many small moves)
+  const distance = Math.hypot(msg.x - player.x, msg.y - player.y);
+  if (!travelAllowed(player, distance)) {
+    send(socket, { type: 'error', message: 'Slow down', x: player.x, y: player.y });
+    return;
+  }
+
+  player.x = msg.x;
+  player.y = msg.y;
 
   broadcastToRoom(room, {
     type: 'player_moved',
