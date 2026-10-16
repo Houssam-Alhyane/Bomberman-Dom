@@ -4,8 +4,8 @@ import { TILE_SIZE, PLAYER_SIZE } from '../world/map/Map.js';
 // Classic Bomberman player colors.
 const PLAYER_COLORS = ['#e53935', '#1e88e5', '#43a047', '#fdd835'];
 
-// Renders the game board and entities into the DOM using the mini-framework.
-// Everything is positioned with translate3d() for GPU compositing.
+// Renders the board with the mini-framework. Static entities use left/top so
+// they paint into the board's shared surface; only players use translate3d.
 export class Renderer {
   constructor(container) {
     this.container = container;
@@ -22,8 +22,6 @@ export class Renderer {
 
   // Render or patch the current game state.
   render(state) {
-    if (!this.container) return;
-
     const newVNode = this.buildView(state);
 
     if (this.domNode) patch(this.vnode, newVNode, this.domNode);
@@ -33,10 +31,8 @@ export class Renderer {
     this.updatePlayerPositions(state.players);
   }
 
-  // Write player positions straight to the DOM: translate3d() only.
+  // state.players is always a Map of Player objects.
   updatePlayerPositions(players) {
-    if (!(players instanceof Map)) return;
-
     for (const [id, player] of players) {
       const key = String(id);
       let el = this._playerEls.get(key);
@@ -53,10 +49,6 @@ export class Renderer {
 
   // Build the complete Virtual DOM tree for the game board.
   buildView(state) {
-    if (!state || !state.map) {
-      return h('div', { id: 'game-board', class: 'hidden', key: 'board' });
-    }
-
     // Tiles only change when a block is destroyed, so rebuild them only then.
     if (!this._tileVNodes || this._tileCount !== state.map.tiles.length) {
       this._tileVNodes = this.renderTiles(state.map.tiles);
@@ -86,7 +78,7 @@ export class Renderer {
       h('div', {
         key: `tile-${tile.x}-${tile.y}`,
         class: `tile ${tile.type}`,
-        style: `width:${TILE_SIZE}px;height:${TILE_SIZE}px;transform:translate3d(${tile.x * TILE_SIZE}px, ${tile.y * TILE_SIZE}px, 0);`,
+        style: `width:${TILE_SIZE}px;height:${TILE_SIZE}px;left:${tile.x * TILE_SIZE}px;top:${tile.y * TILE_SIZE}px;`,
       })
     );
   }
@@ -97,7 +89,7 @@ export class Renderer {
       h('div', {
         key: `powerup-${item.id ?? index}`,
         class: `powerup ${item.type || ''}`.trim(),
-        style: `width:${TILE_SIZE}px;height:${TILE_SIZE}px;transform:translate3d(${item.x * TILE_SIZE}px, ${item.y * TILE_SIZE}px, 0);`,
+        style: `width:${TILE_SIZE}px;height:${TILE_SIZE}px;left:${item.x * TILE_SIZE}px;top:${item.y * TILE_SIZE}px;`,
       })
     );
   }
@@ -108,7 +100,7 @@ export class Renderer {
       h('div', {
         key: `bomb-${bomb.id ?? index}`,
         class: 'bomb',
-        style: `width:${TILE_SIZE}px;height:${TILE_SIZE}px;transform:translate3d(${bomb.x * TILE_SIZE}px, ${bomb.y * TILE_SIZE}px, 0);`,
+        style: `width:${TILE_SIZE}px;height:${TILE_SIZE}px;left:${bomb.x * TILE_SIZE}px;top:${bomb.y * TILE_SIZE}px;`,
       })
     );
   }
@@ -119,16 +111,14 @@ export class Renderer {
       h('div', {
         key: `exp-${exp.id ?? index}`,
         class: 'explosion',
-        style: `width:${TILE_SIZE}px;height:${TILE_SIZE}px;transform:translate3d(${exp.x * TILE_SIZE}px, ${exp.y * TILE_SIZE}px, 0);`,
+        style: `width:${TILE_SIZE}px;height:${TILE_SIZE}px;left:${exp.x * TILE_SIZE}px;top:${exp.y * TILE_SIZE}px;`,
       })
     );
   }
 
   // Render all active players — their position is written after the patch.
   renderPlayers(players, localId) {
-    const list = players instanceof Map ? Array.from(players.values()) : (players || []);
-
-    return list.map((player, index) => {
+    return Array.from(players.values()).map((player, index) => {
       const isDead = !player.alive || player.lives <= 0;
       const isLocal = player.id === localId;
       const color = PLAYER_COLORS[index % PLAYER_COLORS.length];

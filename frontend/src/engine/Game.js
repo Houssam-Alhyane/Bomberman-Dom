@@ -34,15 +34,12 @@ export class GameEngine {
 
     // Callbacks used by the app (main.js).
     this.onMove = null;
-    this.onStats = null;
     this.onPlayers = null;
     this.onWinner = null;
 
     this._playersKey = '';
     this._finished = false;
     this._offServer = [];
-    this._lastFps = -1;
-    this._lastFrameTime = -1;
 
     // The loop hands us the fixed step time in milliseconds.
     this.loop = new GameLoop(
@@ -57,13 +54,10 @@ export class GameEngine {
     this.state.reset();
     this.state.localPlayerId = localPlayerId;
     if (wsClient) this.wsClient = wsClient;
-    // The server owns the map: it sends the tiles with the start message so
     // every client renders the exact same board.
     this.state.setMap(new Map(GRID_WIDTH, GRID_HEIGHT, map));
 
-    // Fresh player list and key state for this match.
-    this.players = new PlayerManager();
-    this.input.reset();
+    // the player manager and input).
     this._playersKey = '';
     this._finished = false;
 
@@ -148,23 +142,9 @@ export class GameEngine {
 
   // Render the current game state into the DOM.
   render() {
-    this.reportStats();
     this.reportPlayers();
     this.reportWinner();
     this.renderer?.render(this.state);
-  }
-
-  // Send FPS and frame time to the UI only when the measured values change.
-  reportStats() {
-    const stats = this.performance.getStats();
-    this.state.fps = stats.fps;
-    this.state.frameTime = stats.frameTime;
-
-    if (stats.fps === this._lastFps && stats.frameTime === this._lastFrameTime) return;
-
-    this._lastFps = stats.fps;
-    this._lastFrameTime = stats.frameTime;
-    this.onStats?.(stats);
   }
 
   // The HUD only needs a new player list when lives or alive flags change.
@@ -198,5 +178,3 @@ export class GameEngine {
     this.input.reset();
   }
 }
-
-export { GameEngine as Game };

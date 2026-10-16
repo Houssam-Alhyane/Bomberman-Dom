@@ -41,7 +41,6 @@ export default class ChatBox {
       this.onSend?.(text); // send message to server
       input.value = '';
     }
-    this.toggle(); 
   }
 
   view() {

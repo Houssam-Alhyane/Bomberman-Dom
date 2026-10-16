@@ -27,7 +27,8 @@ const nickname = new NicknameScreen({
   onSubmit: (value) => nicknameFlow.submit(value),
 });
 
-const gameScreen = new GameScreen(root, { onLeave: () => leaveGame() });
+// The Leave button handler is assigned below, once the rooms flow exists.
+const gameScreen = new GameScreen(root);
 const hud = new HUD(gameScreen.hud);
 const chatBox = new ChatBox(gameScreen.chat, {
   onSend: (text) => chat?.send(text),
@@ -80,7 +81,6 @@ chat = new Chat({
 
 // Local moves go to the server; remote moves are bound per match in startMatch.
 engine.onMove = (player) => client.send({ type: 'move', x: player.x, y: player.y });
-engine.onStats = (stats) => hud.update({ fps: stats.fps, frameTime: stats.frameTime });
 // Lives and alive flags change while the match runs.
 engine.onPlayers = (players) => hud.update({ players });
 // The engine tells us once when the match is decided.
@@ -97,10 +97,12 @@ client.on(SERVER_EVENTS.ERROR, (msg) => {
 });
 
 client.on(SERVER_EVENTS.START, (msg) => startMatch(msg));
-// Leaving a room returns to the lobby; a dropped socket falls back to the
-// nickname screen (returnToLobby picks whichever is safe).
+// Leaving a room while still connected returns to the lobby.
 client.on(SERVER_EVENTS.LEFT_ROOM, () => returnToLobby());
-client.on(CONNECTION_EVENTS.CLOSE, () => returnToLobby());
+// A dropped socket must not re-open the lobby: network/Lobby.js shows the
+// nickname screen in its disconnected state and network/Rooms.js hides the
+// lobby, so here we only tear the match down.
+client.on(CONNECTION_EVENTS.CLOSE, () => teardownMatch());
 
 function startMatch(msg) {
   detachMatchHandlers();

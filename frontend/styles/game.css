@@ -18,8 +18,10 @@
     box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.25), 0 16px 34px rgba(0, 0, 0, 0.45);
 }
 
-/* Every entity is positioned with translate3d, never with top/left.
-   contain isolates reflow/repaint to each element. */
+/* Static entities use left/top, so they share the board's paint surface and
+   do not become compositor layers. Only players are promoted (translate3d).
+   Paint containment is not a layer hint; it is added below only where an
+   entity clips its own contents. */
 #game-board .tile,
 #game-board .player,
 #game-board .bomb,
@@ -29,19 +31,9 @@
     top: 0;
     left: 0;
     box-sizing: border-box;
-    contain: layout style paint;
-    backface-visibility: hidden;
     /* Animations outrank inline styles, so a rule from another sheet could
-       replace the renderer's translate3d() and drag the entity to the origin. */
+       replace the renderer's transform and drag the entity to the origin. */
     animation: none;
-}
-
-/* Only moving entities get their own compositor layer.
-   Tiles are static, so promoting them would waste GPU memory. */
-#game-board .player,
-#game-board .bomb,
-#game-board .explosion {
-    will-change: transform;
 }
 
 /* Static tiles. The bevel borders stay so the collision edges remain crisp. */
@@ -109,15 +101,19 @@
     }
 }
 
-/* Bombs: a 💣 emoji with a pulsing danger ring. Both live on pseudo-elements,
-   so the renderer's translate3d() transform on the bomb stays untouched.
-   :not(.powerup) keeps these rules off the bomb power-up (it has both classes). */
+/* Bombs: a 💣 emoji with a pulsing danger ring.
+   :not(.powerup) keeps these rules off the bomb power-up (it has both classes).
+   The bob animation sits on the bomb element itself (bombs use left/top), so a
+   whole bomb needs only ONE compositor layer instead of one per pseudo-element.
+   The ring pulses by border colour: a paint animation, so no extra layer. */
 #game-board .bomb:not(.powerup) {
     z-index: 3;
     display: grid;
     place-items: center;
     background: none;
     border: none;
+    contain: layout style paint;
+    animation: bomb-bob 0.65s ease-in-out infinite;
 }
 
 #game-board .bomb:not(.powerup)::before {
@@ -125,7 +121,6 @@
     font-size: 34px;
     line-height: 1;
     text-shadow: 0 2px 3px rgba(0, 0, 0, 0.45);
-    animation: bomb-bob 0.65s ease-in-out infinite;
 }
 
 /* The ring stays inside the tile: paint containment clips the bomb's children
@@ -151,42 +146,32 @@
 
 @keyframes bomb-pulse {
     from {
-        transform: scale(0.55);
-        opacity: 0.9;
+        border-color: rgba(255, 70, 70, 0.85);
     }
     to {
-        transform: scale(1);
-        opacity: 0;
+        border-color: rgba(255, 70, 70, 0.15);
     }
 }
 
-/* Explosions: warm fire gradient plus a short white flash that fades out with
-   the 500ms blast lifetime (the flash is on ::after, the tile's own
-   translate3d() stays intact). */
+/* Explosions: warm fire gradient. The pop runs on the tile itself (explosions
+   use left/top), so each active blast tile needs one compositor layer instead
+   of one for the tile plus one for a nested flash. */
 #game-board .explosion {
     z-index: 4;
     border-radius: 10px;
-    background: radial-gradient(circle, #fff6c4 0%, #ffb300 45%, #ff5722 78%, #b71c1c 100%);
+    contain: layout style paint;
+    background:
+        radial-gradient(circle, #fff6c4 0%, #ffb300 45%, #ff5722 78%, #b71c1c 100%);
     box-shadow: 0 0 10px rgba(255, 152, 0, 0.75);
-}
-
-#game-board .explosion::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 62%);
     animation: blast-pop 0.3s ease-out both;
 }
 
 @keyframes blast-pop {
     from {
         transform: scale(0.45);
-        opacity: 1;
     }
     to {
         transform: scale(1);
-        opacity: 0;
     }
 }
 
@@ -195,6 +180,7 @@
     z-index: 2;
     display: grid;
     place-items: center;
+    contain: layout style paint;
     border: 2px solid rgba(0, 0, 0, 0.35);
     border-radius: 8px;
     font-size: 24px;
@@ -226,10 +212,10 @@
 
 /* Respect reduced-motion: keep the looks, drop the moving effects. */
 @media (prefers-reduced-motion: reduce) {
-    #game-board .bomb:not(.powerup)::before,
+    #game-board .bomb:not(.powerup),
     #game-board .bomb:not(.powerup)::after,
     #game-board .powerup::after,
-    #game-board .explosion::after {
+    #game-board .explosion {
         animation: none;
     }
 
@@ -381,12 +367,6 @@
     color: #9fb0c0;
 }
 
-.hud-stats {
-    color: #9fb0c0;
-    font-size: 0.85rem;
-    white-space: nowrap;
-}
-
 .countdown {
     color: #00e676;
     font-weight: 700;
@@ -427,9 +407,8 @@
         font-size: 0.78rem;
     }
 
-    /* "Players" and the FPS readout each cost a whole wrapped row. */
-    .hud-label,
-    .hud-stats {
+    /* "Players" costs a whole wrapped row on a phone. */
+    .hud-label {
         display: none;
     }
 }
