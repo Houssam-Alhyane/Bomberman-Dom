@@ -9,13 +9,14 @@ import { Input } from '../world/player/playerinput.js';
 import { GRID_WIDTH, GRID_HEIGHT } from '../shared/constants.js';
 import { SERVER_EVENTS } from '../shared/events.js';
 
-// Facts about the match that other players send us. shared/events.js only
-// defines POWERUP_SPAWN and GAME_OVER under SERVER_EVENTS, so the other two are
-// written out here to match the server broadcast names.
+// Authoritative gameplay events from the server.
 const SERVER_GAME_EVENTS = [
-  'place_bomb',
+  SERVER_EVENTS.PLACE_BOMB,
+  SERVER_EVENTS.EXPLOSION,
+  SERVER_EVENTS.BLOCK_DESTROYED,
   SERVER_EVENTS.POWERUP_SPAWN,
-  'powerup_collect',
+  SERVER_EVENTS.POWERUP_COLLECTED,
+  SERVER_EVENTS.PLAYER_HIT,
   SERVER_EVENTS.GAME_OVER,
 ];
 
@@ -67,7 +68,7 @@ export class GameEngine {
     this._finished = false;
 
     const list = players.length ? players : [{ id: localPlayerId, nickname: 'Player' }];
-    list.forEach((player) => this.addPlayer(player.id, player.nickname));
+    list.forEach((p) => this.addPlayer(p.id, p.nickname, p));
 
     this.gameplay = new BombManager();
     this.gameplay.onEvent((fact) => this.wsClient?.send(fact));
@@ -76,11 +77,15 @@ export class GameEngine {
     this.renderer = new Renderer(container);
   }
 
-  // Add a player at the next free spawn tile.
-  addPlayer(id, nickname) {
+  // Add a player at the next free spawn tile, optionally with server stats.
+  addPlayer(id, nickname, serverData) {
     const player = this.players.addPlayer(id, nickname);
 
     if (player) {
+      // Apply server-authoritative stats if provided (lives, speed, bombs, flameRange)
+      if (serverData) {
+        player.setStats(serverData);
+      }
       this.state.players.set(id, player);
     }
 

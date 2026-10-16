@@ -34,20 +34,4 @@ export class PlayerManager {
 
         return player;
     }
-
-    removePlayer(id) {
-        this.players = this.players.filter(
-            player => player.id !== id
-        );
-    }
-
-    getPlayer(id) {
-        return this.players.find(
-            player => player.id === id
-        );
-    }
-
-    getPlayers() {
-        return this.players;
-    }
 }

@@ -22,21 +22,20 @@ export class Player {
     get bombs() { return this.#bombs }
     get flameRange() { return this.#flameRange }
 
-    // take one hit and lock elimination at zero lives
-    loseLife() {
-        if (!this.#alive) return
-
-        this.#lives -= 1
-        if (this.#lives <= 0) {
-            this.#lives = 0
-            this.#alive = false
-        }
+    // Apply authoritative lives/alive from the server.
+    setServerState(lives, alive) {
+        this.#lives = lives
+        this.#alive = alive
     }
 
-    // raise a stat by one step when a power-up is collected
-    addBomb() { this.#bombs += 1 }
-    addFlame() { this.#flameRange += 1 }
-    addSpeed() { this.#speed += 1 }
+    // Apply authoritative stats from the server (after powerup collection).
+    setStats(stats) {
+        if (stats.lives !== undefined) this.#lives = stats.lives
+        if (stats.alive !== undefined) this.#alive = stats.alive
+        if (stats.speed !== undefined) this.#speed = stats.speed
+        if (stats.bombs !== undefined) this.#bombs = stats.bombs
+        if (stats.flameRange !== undefined) this.#flameRange = stats.flameRange
+    }
 
     // dx = 1 == -> && dx = -1 === <-
     // dy = 1 == ^ && dy = - 1  === |

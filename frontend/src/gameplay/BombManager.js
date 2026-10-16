@@ -1,31 +1,25 @@
 import { TILE_SIZE, PLAYER_SIZE } from '../world/map/Map.js';
 import { Bomb } from './Bomb.js';
 import { Explosion } from './Explosion.js';
-import { DamageSystem, isCovered } from './DamageSystem.js';
-import { PowerUp, POWERUP_TYPES, randomType, shouldDrop } from './PowerUp.js';
+import { PowerUp, POWERUP_TYPES } from './PowerUp.js';
 
-// fixed rule values agreed for the team.
-const BOMB_TIMER = 3000;
+// fixed visual rule: how long an explosion tile displays on the client
 const EXPLOSION_DURATION = 500;
-const DROP_CHANCE = 0.3;
 
-// a blast never reaches further than this, however it arrived.
+// a blast range never exceeds this (matches server).
 export const MAX_RANGE = 10;
 
-// keep a relayed range inside the legal bounds.
-function clampRange(value) {
-  if (!Number.isFinite(value)) return 1;
-  return Math.max(1, Math.min(MAX_RANGE, Math.floor(value)));
-}
-
-// the single front door for bombs, explosions, damage, power-ups and winner.
+// The BombManager is now a *display-only* layer.
+// All gameplay decisions (detonation, damage, powerups, game over) come from
+// the server. The client only:
+//   1. Requests bomb placement (server decides if it's valid)
+//   2. Displays bombs, explosions, powerups from server events
+//   3. Ticks visual timers for animations
 export class BombManager {
   constructor() {
     this.nextId = 1;
     this.eventHandler = null;
-    this.damage = new DamageSystem();
     this.announced = false;
-    this.random = Math.random;
   }
 
   // register the outgoing fact handler, wired to the socket elsewhere.
@@ -33,77 +27,113 @@ export class BombManager {
     this.eventHandler = callback;
   }
 
-  // place a bomb on the player's tile when the rules allow it.
+  // Request a bomb placement. The server will validate and broadcast if accepted.
   placeBomb(player, state) {
     if (!player?.alive || !state) return;
 
     const tile = this.tileOf(player);
+
+    // local duplicate check (avoids sending obviously bad requests)
     const taken = state.bombs.some((bomb) => bomb.x === tile.x && bomb.y === tile.y);
     if (taken) return;
-    if (this.liveBombs(state, player.id) >= player.bombs) return;
 
-    const bomb = new Bomb(this.newId('bomb'), player.id, tile.x, tile.y, player.flameRange, BOMB_TIMER);
-    state.bombs.push(bomb);
-    this.emit({ type: 'place_bomb', playerId: player.id, x: tile.x, y: tile.y, range: player.flameRange });
+    // just send the request — no range, no capacity check, server decides
+    this.emit({ type: 'place_bomb' });
   }
 
-  // advance bombs, explosions, drops, hits and the winner by one fixed step.
+  // Advance visual timers only — no detonation, no damage, no powerups.
   update(frameTime, state, map) {
     if (!state || !map) return;
 
-    const detonated = [];
-    state.bombs.forEach((bomb) => {
-      bomb.tick(frameTime);
-      if (bomb.expired) detonated.push(bomb);
-    });
-    if (detonated.length) {
-      state.bombs = state.bombs.filter((bomb) => !bomb.expired);
-    }
+    // tick bomb visual timers (for animation/pulsing)
+    state.bombs.forEach((bomb) => bomb.tick(frameTime));
+    // remove bombs whose timers expired locally (server will send explosion event)
+    state.bombs = state.bombs.filter((bomb) => !bomb.expired);
 
-    detonated.forEach((bomb) => this.detonate(state, map, bomb));
-
+    // tick explosion visual timers
     state.explosions.forEach((explosion) => explosion.tick(frameTime));
     state.explosions = state.explosions.filter((explosion) => !explosion.expired);
-
-    this.collect(state);
-
-    // decide the match once, after every death from this step is applied
-    if (detonated.length) this.checkWinner(state);
   }
 
-  // mirror a fact that arrived from the relay, trusting nothing in it.
+  // Apply an authoritative server event to the local display state.
   applyRemote(event, state) {
     if (!event || !state) return;
 
+    // Server confirmed a bomb placement
     if (event.type === 'place_bomb') {
-      const owner = state.players.get(event.playerId);
-      if (!owner?.alive) return;
-      if (!this.onTile(owner, event.x, event.y)) return;
-
-      const taken = state.bombs.some((bomb) => bomb.x === event.x && bomb.y === event.y);
-      if (taken) return;
-
-      const range = clampRange(event.range);
-      state.bombs.push(new Bomb(this.newId('bomb'), event.playerId, event.x, event.y, range, BOMB_TIMER));
+      const range = Math.max(1, Math.min(MAX_RANGE, event.range || 1));
+      // avoid duplicate if we already added it from a prior message
+      const exists = state.bombs.some((b) => b.x === event.x && b.y === event.y);
+      if (!exists) {
+        state.bombs.push(
+          new Bomb(this.newId('bomb'), event.playerId, event.x, event.y, range, 3000),
+        );
+      }
       return;
     }
 
+    // Server says an explosion happened — add visual explosion tiles
+    if (event.type === 'explosion') {
+      (event.tiles || []).forEach((tile) => {
+        state.explosions.push(
+          new Explosion(this.newId('exp'), tile.x, tile.y, EXPLOSION_DURATION),
+        );
+      });
+      // remove any bombs at the explosion origin (the server detonated them)
+      if (event.tiles && event.tiles.length > 0) {
+        const origin = event.tiles[0];
+        state.bombs = state.bombs.filter(
+          (b) => !(b.x === origin.x && b.y === origin.y),
+        );
+      }
+      return;
+    }
+
+    // Server destroyed a block — update the local map copy
+    if (event.type === 'block_destroyed') {
+      if (state.map) {
+        state.map.tiles = state.map.tiles.filter(
+          (t) => !(t.type === 'block' && t.x === event.x && t.y === event.y),
+        );
+      }
+      return;
+    }
+
+    // Server spawned a power-up
     if (event.type === 'powerup_spawn') {
       if (!POWERUP_TYPES.includes(event.powerUpType)) return;
       if (!Number.isInteger(event.x) || !Number.isInteger(event.y)) return;
-
-      state.powerUps.push(new PowerUp(this.newId('power'), event.x, event.y, event.powerUpType));
+      state.powerUps.push(
+        new PowerUp(this.newId('power'), event.x, event.y, event.powerUpType),
+      );
       return;
     }
 
-    if (event.type === 'powerup_collect') {
-      const collector = state.players.get(event.playerId);
-      if (!collector || !this.onTile(collector, event.x, event.y)) return;
-
-      state.powerUps = state.powerUps.filter((item) => !(item.x === event.x && item.y === event.y));
+    // Server confirmed a power-up was collected
+    if (event.type === 'powerup_collected') {
+      state.powerUps = state.powerUps.filter(
+        (item) => !(item.x === event.x && item.y === event.y),
+      );
+      // update local player stats from server
+      if (event.stats) {
+        const player = state.players.get(event.playerId);
+        if (player) {
+          player.setStats(event.stats);
+        }
+      }
       return;
     }
 
+    // Server says a player got hit
+    if (event.type === 'player_hit') {
+      const player = state.players.get(event.playerId);
+      if (player) {
+        player.setServerState(event.lives, event.alive);
+      }
+      return;
+    }
+
+    // Server declares game over
     if (event.type === 'game_over') {
       const winnerId = event.winnerId ?? null;
       if (winnerId !== null && !state.players.has(winnerId)) return;
@@ -129,74 +159,5 @@ export class BombManager {
       x: Math.floor((player.x + PLAYER_SIZE / 2) / TILE_SIZE),
       y: Math.floor((player.y + PLAYER_SIZE / 2) / TILE_SIZE),
     };
-  }
-
-  // true when a player's hitbox covers the given tile.
-  onTile(player, x, y) {
-    return Number.isInteger(x) && Number.isInteger(y) && isCovered(player, [{ x, y }]);
-  }
-
-  // count a player's live bombs.
-  liveBombs(state, ownerId) {
-    return state.bombs.filter((bomb) => bomb.ownerId === ownerId).length;
-  }
-
-  // explode one bomb: cover tiles, break blocks, drop items and hurt players.
-  detonate(state, map, bomb) {
-    const covered = Explosion.cover(bomb.x, bomb.y, bomb.range, map);
-
-    covered.forEach((tile) => {
-      state.explosions.push(new Explosion(this.newId('exp'), tile.x, tile.y, EXPLOSION_DURATION));
-      if (map.isBlock(tile.x, tile.y)) this.destroyBlock(state, map, tile);
-    });
-
-    // one explosion is a single event, so each covered player loses one life
-    this.damage.apply(state.players.values(), covered);
-  }
-
-  // remove a broken block and maybe leave a power-up behind.
-  destroyBlock(state, map, tile) {
-    map.tiles = map.tiles.filter(
-      (entry) => !(entry.type === 'block' && entry.x === tile.x && entry.y === tile.y)
-    );
-
-    if (!shouldDrop(DROP_CHANCE, this.random)) return;
-
-    const type = randomType(this.random);
-    state.powerUps.push(new PowerUp(this.newId('power'), tile.x, tile.y, type));
-    this.emit({ type: 'powerup_spawn', x: tile.x, y: tile.y, powerUpType: type });
-  }
-
-  // a living player standing on a power-up takes it.
-  collect(state) {
-    state.powerUps.slice().forEach((item) => {
-      const player = this.playerOn(state, item.x, item.y);
-      if (!player) return;
-
-      item.applyTo(player);
-      state.powerUps = state.powerUps.filter((other) => other !== item);
-      this.emit({ type: 'powerup_collect', playerId: player.id, x: item.x, y: item.y });
-    });
-  }
-
-  // the first living player standing on a tile.
-  playerOn(state, x, y) {
-    for (const player of state.players.values()) {
-      if (!player.alive) continue;
-      if (isCovered(player, [{ x, y }])) return player;
-    }
-    return null;
-  }
-
-  // one survivor wins, none is a draw, and the result is announced once.
-  checkWinner(state) {
-    if (this.announced) return;
-
-    const alive = [...state.players.values()].filter((player) => player.alive);
-    if (alive.length > 1) return;
-
-    state.winner = alive.length === 1 ? alive[0].id : null;
-    this.announced = true;
-    this.emit({ type: 'game_over', winnerId: state.winner });
   }
 }

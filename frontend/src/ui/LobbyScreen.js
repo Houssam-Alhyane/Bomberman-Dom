@@ -59,16 +59,8 @@ export default class LobbyScreen {
     this.set({ rooms: rooms || [] });
   }
 
-  setGameState(gameState) {
-    this.set({ gameState });
-  }
-
   setView(view) {
     this.set({ view, error: '' });
-  }
-
-  setNickname(nickname) {
-    this.set({ nickname });
   }
 
   setError(text) {

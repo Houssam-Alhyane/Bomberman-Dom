@@ -7,7 +7,7 @@ export const CLIENT_EVENTS = {
   CHAT: 'chat',
   MOVE: 'move',
   PLACE_BOMB: 'place_bomb',
-  POWERUP_COLLECT: 'powerup_collect',
+  // powerup_collect and game_over are no longer sent by the client
 };
 
 //message types received from the server, values must match backend broadcast payloads
@@ -22,7 +22,12 @@ export const SERVER_EVENTS = {
   START: 'start',
   CHAT: 'chat',
   PLAYER_MOVED: 'player_moved',
+  PLACE_BOMB: 'place_bomb',
+  EXPLOSION: 'explosion',
+  BLOCK_DESTROYED: 'block_destroyed',
   POWERUP_SPAWN: 'powerup_spawn',
+  POWERUP_COLLECTED: 'powerup_collected',
+  PLAYER_HIT: 'player_hit',
   GAME_OVER: 'game_over',
 };
 
@@ -31,3 +36,4 @@ export const CONNECTION_EVENTS = {
   OPEN: 'open',
   CLOSE: 'close',
 };
+
