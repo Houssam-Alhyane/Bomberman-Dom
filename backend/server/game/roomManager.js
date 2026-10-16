@@ -1,11 +1,19 @@
 const Room = require('./room');
 
+// Cap the number of live rooms so a connection flood cannot fill memory.
+const MAX_ROOMS = 2;
+
 class RoomManager {
   constructor() {
     this.rooms = new Map();
   }
 
+  // returns the new room, or null when the server already holds the max
   createRoom() {
+    if (this.rooms.size >= MAX_ROOMS) {
+      return null;
+    }
+
     const id = this.nextId();
     const room = new Room();
 

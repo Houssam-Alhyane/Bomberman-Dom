@@ -56,6 +56,12 @@ function createRoom(socket, wss, player, roomManager) {
 
   const room = roomManager.createRoom();
 
+  // the server is at its room cap, tell the player instead of crashing
+  if (!room) {
+    send(socket, { type: 'error', message: 'Server is full, try again later' });
+    return;
+  }
+
   //broadcast every timer/state change
   room.onStateChange = () => broadcastRoomState(room);
 
