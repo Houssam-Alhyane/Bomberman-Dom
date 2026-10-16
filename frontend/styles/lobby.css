@@ -34,16 +34,18 @@
     line-height: 1;
 }
 
-.bomb {
+/* Scoped to the mascot row: a bare .bomb would also hit the bombs on the
+   game board, where the bob animation overrides their translate3d(). */
+.lobby-mascots .bomb {
     display: inline-block;
     animation: bob 2.4s ease-in-out infinite;
 }
 
-.bomb-2 {
+.lobby-mascots .bomb-2 {
     animation-delay: 0.3s;
 }
 
-.bomb-3 {
+.lobby-mascots .bomb-3 {
     animation-delay: 0.6s;
 }
 
