@@ -36,11 +36,7 @@ export class DamageSystem {
       if (!player.alive) return;
       if (!isCovered(player, covered)) return;
 
-      player.lives -= 1;
-      if (player.lives <= 0) {
-        player.lives = 0;
-        player.alive = false;
-      }
+      player.loseLife();
 
       this.hits.push(player.id);
     });

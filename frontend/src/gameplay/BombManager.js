@@ -2,12 +2,21 @@ import { TILE_SIZE, PLAYER_SIZE } from '../world/map/Map.js';
 import { Bomb } from './Bomb.js';
 import { Explosion } from './Explosion.js';
 import { DamageSystem, isCovered } from './DamageSystem.js';
-import { PowerUp, randomType, shouldDrop } from './PowerUp.js';
+import { PowerUp, POWERUP_TYPES, randomType, shouldDrop } from './PowerUp.js';
 
 // fixed rule values agreed for the team.
 const BOMB_TIMER = 3000;
 const EXPLOSION_DURATION = 500;
 const DROP_CHANCE = 0.3;
+
+// a blast never reaches further than this, however it arrived.
+export const MAX_RANGE = 10;
+
+// keep a relayed range inside the legal bounds.
+function clampRange(value) {
+  if (!Number.isFinite(value)) return 1;
+  return Math.max(1, Math.min(MAX_RANGE, Math.floor(value)));
+}
 
 // the single front door for bombs, explosions, damage, power-ups and winner.
 export class BombManager {
@@ -62,30 +71,44 @@ export class BombManager {
     if (detonated.length) this.checkWinner(state);
   }
 
-  // mirror a fact that arrived from the relay.
+  // mirror a fact that arrived from the relay, trusting nothing in it.
   applyRemote(event, state) {
     if (!event || !state) return;
 
     if (event.type === 'place_bomb') {
+      const owner = state.players.get(event.playerId);
+      if (!owner?.alive) return;
+      if (!this.onTile(owner, event.x, event.y)) return;
+
       const taken = state.bombs.some((bomb) => bomb.x === event.x && bomb.y === event.y);
-      if (!taken) {
-        state.bombs.push(new Bomb(this.newId('bomb'), event.playerId, event.x, event.y, event.range, BOMB_TIMER));
-      }
+      if (taken) return;
+
+      const range = clampRange(event.range);
+      state.bombs.push(new Bomb(this.newId('bomb'), event.playerId, event.x, event.y, range, BOMB_TIMER));
       return;
     }
 
     if (event.type === 'powerup_spawn') {
+      if (!POWERUP_TYPES.includes(event.powerUpType)) return;
+      if (!Number.isInteger(event.x) || !Number.isInteger(event.y)) return;
+
       state.powerUps.push(new PowerUp(this.newId('power'), event.x, event.y, event.powerUpType));
       return;
     }
 
     if (event.type === 'powerup_collect') {
+      const collector = state.players.get(event.playerId);
+      if (!collector || !this.onTile(collector, event.x, event.y)) return;
+
       state.powerUps = state.powerUps.filter((item) => !(item.x === event.x && item.y === event.y));
       return;
     }
 
     if (event.type === 'game_over') {
-      state.winner = event.winnerId;
+      const winnerId = event.winnerId ?? null;
+      if (winnerId !== null && !state.players.has(winnerId)) return;
+
+      state.winner = winnerId;
       this.announced = true;
     }
   }
@@ -106,6 +129,11 @@ export class BombManager {
       x: Math.floor((player.x + PLAYER_SIZE / 2) / TILE_SIZE),
       y: Math.floor((player.y + PLAYER_SIZE / 2) / TILE_SIZE),
     };
+  }
+
+  // true when a player's hitbox covers the given tile.
+  onTile(player, x, y) {
+    return Number.isInteger(x) && Number.isInteger(y) && isCovered(player, [{ x, y }]);
   }
 
   // count a player's live bombs.
