@@ -65,8 +65,8 @@
     display: grid;
     place-items: center;
     border: 2px solid rgba(255, 255, 255, 0.9);
-    border-radius: 50%;
-    background-image: radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.65), rgba(0, 0, 0, 0.32) 78%) !important;
+    border-radius: 0;
+    background-image: linear-gradient(150deg, rgba(255, 255, 255, 0.35), rgba(0, 0, 0, 0.28)) !important;
     transition: none;
 }
 
@@ -77,11 +77,6 @@
     font-size: 15px;
     line-height: 1;
     text-shadow: 0 1px 1px rgba(0, 0, 0, 0.55);
-}
-
-/* A cyan ring marks the local player on the board. */
-#game-board .player.local {
-    box-shadow: 0 0 0 2px #0b0f14, 0 0 0 4px #00e5ff;
 }
 
 /* Death reaction: one quick grey-out. Only opacity/filter are animated, never
