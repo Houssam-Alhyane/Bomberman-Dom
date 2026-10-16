@@ -1,12 +1,18 @@
 const { checkNickname } = require('./nickname');
 
 function joinLobby(players, player, nickname) {
-  const cleanNickname = checkNickname(players, player, nickname);
+  //validation first: on failure there is no clean nickname to compare against
+  const check = checkNickname(players, player, nickname);
+
+  if (!check.success) {
+    return check;
+  }
+
   const nicknameExists = players.some(
     (other) =>
       other.id !== player.id &&
       other.nickname &&
-      other.nickname.toLowerCase() === cleanNickname.nickname.toLowerCase(),
+      other.nickname.toLowerCase() === check.nickname.toLowerCase(),
   );
 
   if (nicknameExists) {
@@ -18,7 +24,7 @@ function joinLobby(players, player, nickname) {
 
   return {
     success: true,
-    nickname: cleanNickname.nickname,
+    nickname: check.nickname,
   };
 }
 

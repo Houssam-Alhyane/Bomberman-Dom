@@ -31,7 +31,8 @@ function isCovered(player, covered) {
   );
 }
 
-// explosion coverage from an origin in four directions, stopped by walls
+// explosion coverage from an origin in four directions.
+
 function explosionCover(x, y, range, map) {
   const tiles = [{ x, y }];
   const dirs = [
@@ -46,6 +47,7 @@ function explosionCover(x, y, range, map) {
       const ty = y + dy * step;
       if (!map.isInsideMap(tx, ty) || map.isWall(tx, ty)) break;
       tiles.push({ x: tx, y: ty });
+      if (map.isBlock(tx, ty)) break;
     }
   });
   return tiles;
