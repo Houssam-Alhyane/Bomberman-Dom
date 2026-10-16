@@ -10,6 +10,23 @@ const KEY_DIRECTIONS = {
     d: 'right',
 };
 
+// True when the key went to a text field.
+// The game listens on document, so without this check typing a/s/d/w (or a
+// space) in the nickname box or the chat would be swallowed by preventDefault
+// and never reach the field.
+function isTypingTarget(target) {
+    if (!target || !target.tagName) return false;
+
+    const tag = target.tagName;
+
+    return (
+        tag === 'INPUT' ||
+        tag === 'TEXTAREA' ||
+        tag === 'SELECT' ||
+        target.isContentEditable
+    );
+}
+
 // Tracks which movement keys are held and turns them into a direction.
 // The game loop asks for a direction every tick, so movement stays smooth.
 export class Input {
@@ -30,9 +47,11 @@ export class Input {
     setKey(event, pressed) {
         // Single characters are lowercased so W/A/S/D and w/a/s/d both work.
         const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+        const typing = isTypingTarget(event.target);
 
         // space is an action, fired once per press and not while held
         if (key === ' ') {
+            if (typing) return; // the text field owns the space
             event.preventDefault();
             if (pressed && !this.actions.bombHeld) {
                 this.actions.bomb = true;
@@ -47,6 +66,13 @@ export class Input {
         const direction = KEY_DIRECTIONS[key];
 
         if (!direction) return;
+
+        // A text field owns the letter: never preventDefault it, but still
+        // release the key in case it was held when the field got focus.
+        if (typing) {
+            if (!pressed) this.keys[direction] = false;
+            return;
+        }
 
         // Stop arrow keys from scrolling the page.
         event.preventDefault();
