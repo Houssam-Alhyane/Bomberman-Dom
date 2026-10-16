@@ -3,6 +3,7 @@ const { joinLobby } = require('./lobby');
 const { getPlayerList } = require('./state');
 const { startTicking, finishGame } = require('../game/gameLoop');
 const { playerStats } = require('../game/playerStats');
+
 //get a list of players in a room with their id and nickname
 function getRoomPlayers(room) {
   return room.players.map((player) => ({
@@ -77,7 +78,8 @@ function createRoom(socket, wss, player, roomManager) {
         nickname: p.nickname,
         ...playerStats(p),
       })),
-      map: room.map.tiles, //server-generated map, shared by all clients
+      //server-generated map
+      map: room.map.tiles,
     });
   };
 

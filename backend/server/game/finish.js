@@ -1,8 +1,3 @@
-// Match outcome: who won, and the two ways a match ends.
-//
-//   normal - a blast left at most one player alive (checkWinner, from the tick)
-//   early  - a player left a running match and only one competitor is left
-//            (finishGame, called from removeFromRoom)
 
 const { stopTicking } = require('./ticking');
 
@@ -18,8 +13,6 @@ function endMatch(room, winnerId, broadcast) {
 }
 
 // End the match immediately and tell the room who won.
-// Used when the game can no longer continue, e.g. a player left and only one
-// competitor is left standing.
 function finishGame(room, broadcast) {
   const gs = room.gameState;
   if (!gs || gs.finished) return;
