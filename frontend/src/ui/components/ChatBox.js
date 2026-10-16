@@ -1,10 +1,11 @@
 import { h, render, patch, State } from '../../../framework/src/index.js';
 
 export default class ChatBox {
-  constructor(container, { onSend, onToggle } = {}) {
+  constructor(container, { onSend, onToggle, title = 'Game Chat' } = {}) {
     this.container = container;
     this.onSend = onSend;
     this.onToggle = onToggle;
+    this.title = title;
     this.old = null;
     this.node = null;
 
@@ -50,7 +51,7 @@ export default class ChatBox {
     return h('div', { class: `chat-modal-wrapper ${isOpen ? 'active' : 'hidden'}` }, [
       h('div', { class: 'chat-window' }, [
         h('div', { class: 'chat-header' }, [
-          h('span', {}, ['Game Chat']),
+          h('span', {}, [this.title]),
           h('button', { class: 'close-btn', onClick: () => this.toggle() }, ['X'])
         ]),
         h('ul', { class: 'chat-messages' }, messages.map(m =>

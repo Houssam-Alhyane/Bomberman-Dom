@@ -1,8 +1,4 @@
-import {
-  CLIENT_EVENTS,
-  SERVER_EVENTS,
-  CONNECTION_EVENTS,
-} from '../shared/events.js';
+import { SERVER_EVENTS, CONNECTION_EVENTS } from '../shared/events.js';
 
 //same rules as backend/server/sockets/chat.js, so bad input never costs a round trip
 const MAX_MESSAGE_LENGTH = 200;
@@ -10,17 +6,20 @@ const HISTORY_LIMIT = 100;
 
 //chat step: validates outgoing messages, keeps a short history of the room, and
 //reports each message through onMessage. no DOM, no rendering - the UI owns that.
+//the channel picks which chat we are: room chat (default) or global chat.
 export default class Chat {
-  constructor({ client, onMessage, onError } = {}) {
+  constructor({ client, onMessage, onError, channel = SERVER_EVENTS.CHAT, locked = true } = {}) {
     this.client = client;
+    this.channel = channel; //message type used for both sending and receiving
     this.onMessage = onMessage;
     this.onError = onError;
 
     this.selfId = null; //our player id, so we can mark our own messages
     this.messages = []; //store all messages
-    this.locked = true; //no chatting until the game actually starts
+    this.locked = locked; //room chat waits for the game; global chat is always open
+    this.defaultLocked = locked; //lock state to restore when the connection drops
 
-    client.on(SERVER_EVENTS.CHAT, (msg) => this.receive(msg));
+    client.on(channel, (msg) => this.receive(msg));
     client.on(CONNECTION_EVENTS.CLOSE, () => this.reset());
   }
 
@@ -53,7 +52,7 @@ export default class Chat {
       return false;
     }
 
-    if (!this.client.send({ type: CLIENT_EVENTS.CHAT, message })) {
+    if (!this.client.send({ type: this.channel, message })) {
       this.onError?.('Not connected to the server');
       return false;
     }
@@ -96,6 +95,6 @@ export default class Chat {
   reset() {
     this.clear();
     this.selfId = null;
-    this.locked = true;
+    this.locked = this.defaultLocked;
   }
 }

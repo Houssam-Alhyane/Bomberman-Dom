@@ -1,4 +1,4 @@
-const { send, broadcastToRoom } = require('./broadcast');
+const { send, broadcast, broadcastToRoom } = require('./broadcast');
 
 const MAX_MESSAGE_LENGTH = 200;
 
@@ -72,6 +72,30 @@ function chat(socket, player, roomManager, message) {
   });
 }
 
+// Global chat: every connected player sees it, whether or not they are in a
+// room or in a running game.
+function globalChat(socket, player, wss, message) {
+  if (!player.nickname) {
+    send(socket, { type: 'error', message: 'Set a nickname first' });
+    return;
+  }
+
+  const result = validateMessage(message);
+
+  if (!result.success) {
+    send(socket, { type: 'error', message: result.message });
+    return;
+  }
+
+  broadcast(wss, {
+    type: 'global_chat',
+    playerId: player.id,
+    nickname: player.nickname,
+    message: result.message,
+  });
+}
+
 module.exports = {
   chat,
+  globalChat,
 };

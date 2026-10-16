@@ -5,6 +5,7 @@ export const CLIENT_EVENTS = {
   JOIN_ROOM: 'join_room',
   LEAVE_ROOM: 'leave_room',
   CHAT: 'chat',
+  GLOBAL_CHAT: 'global_chat',
   MOVE: 'move',
   PLACE_BOMB: 'place_bomb',
   // powerup_collect and game_over are no longer sent by the client
@@ -21,6 +22,7 @@ export const SERVER_EVENTS = {
   LEFT_ROOM: 'left_room',
   START: 'start',
   CHAT: 'chat',
+  GLOBAL_CHAT: 'global_chat',
   PLAYER_MOVED: 'player_moved',
   PLAYER_LEFT: 'player_left',
   PLACE_BOMB: 'place_bomb',

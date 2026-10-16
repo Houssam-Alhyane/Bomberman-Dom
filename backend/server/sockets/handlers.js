@@ -1,6 +1,6 @@
 const { checkNickname } = require('./nickname');
 const { send } = require('./broadcast');
-const { chat } = require('./chat');
+const { chat, globalChat } = require('./chat');
 const { createRoom, joinRoom, leaveRoom } = require('./rooms');
 const { move } = require('./movement');
 const { placeBomb } = require('./bombs');
@@ -68,6 +68,10 @@ function handleMessage(socket, wss, msg) {
 
     case 'chat':
       chat(socket, player, roomManager, msg.message);
+      return;
+
+    case 'global_chat':
+      globalChat(socket, player, wss, msg.message);
       return;
 
     case 'move':
