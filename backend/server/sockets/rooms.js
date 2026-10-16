@@ -140,6 +140,11 @@ function removeFromRoom(wss, player, roomManager) {
 
   room.removePlayer(player.id);
 
+  // in a running match the other clients must drop this player's sprite
+  if (room.state === 'playing') {
+    broadcastToRoom(room, { type: 'player_left', playerId: player.id });
+  }
+
   if (room.isEmpty()) {
     roomManager.removeRoom(room.id);
     console.log(`${roomName} removed - no players left`);

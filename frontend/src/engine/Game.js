@@ -102,11 +102,23 @@ export class GameEngine {
     }
   }
 
+  // Drop a player who left or disconnected; the renderer removes the sprite.
+  removePlayer(id) {
+    this.state.players.delete(id);
+  }
+
   // Bombs, power-ups and the result also arrive from the other players.
   listenToServer() {
     this._offServer = SERVER_GAME_EVENTS.map((type) =>
       this.wsClient?.on(type, (msg) => this.gameplay?.applyRemote(msg, this.state))
     ).filter(Boolean);
+
+    const offLeft = this.wsClient?.on(SERVER_EVENTS.PLAYER_LEFT, (msg) => {
+      if (msg.playerId !== this.state.localPlayerId) {
+        this.removePlayer(msg.playerId);
+      }
+    });
+    if (offLeft) this._offServer.push(offLeft);
   }
 
   // Start and stop the fixed-step game loop.

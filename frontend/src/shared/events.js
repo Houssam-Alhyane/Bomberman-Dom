@@ -22,6 +22,7 @@ export const SERVER_EVENTS = {
   START: 'start',
   CHAT: 'chat',
   PLAYER_MOVED: 'player_moved',
+  PLAYER_LEFT: 'player_left',
   PLACE_BOMB: 'place_bomb',
   EXPLOSION: 'explosion',
   BLOCK_DESTROYED: 'block_destroyed',
