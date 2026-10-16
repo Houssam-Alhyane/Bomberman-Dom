@@ -44,9 +44,10 @@
     will-change: transform;
 }
 
-/* Static tiles */
+/* Static tiles. The bevel borders stay so the collision edges remain crisp. */
 #game-board .tile.wall {
     background: #45494d;
+    background-image: linear-gradient(150deg, rgba(255, 255, 255, 0.09), rgba(0, 0, 0, 0.14));
     border-top: 3px solid #5c6166;
     border-left: 3px solid #5c6166;
     border-right: 3px solid #2b2e31;
@@ -55,18 +56,35 @@
 
 #game-board .tile.block {
     background: #b06a43;
+    background-image: linear-gradient(150deg, rgba(255, 255, 255, 0.14), rgba(0, 0, 0, 0.12));
     border-top: 3px solid #cd8a62;
     border-left: 3px solid #cd8a62;
     border-right: 3px solid #7c4527;
     border-bottom: 3px solid #7c4527;
 }
 
-/* Players */
+/* Players: robot character on a coloured body.
+   The body colour is the renderer's inline background (one per player), so it
+   stays as the "team colour" behind the emoji - CSS cannot recolour the emoji
+   itself. The shading overlay is !important only because the inline
+   background shorthand would otherwise set background-image back to none. */
 #game-board .player {
     z-index: 10;
+    display: grid;
+    place-items: center;
     border: 2px solid rgba(255, 255, 255, 0.9);
     border-radius: 50%;
+    background-image: radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.65), rgba(0, 0, 0, 0.32) 78%) !important;
     transition: none;
+}
+
+/* The character. A pseudo-element, so the translate3d() the renderer writes on
+   the player element is never overwritten. */
+#game-board .player::before {
+    content: '🤖';
+    font-size: 15px;
+    line-height: 1;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.55);
 }
 
 /* A cyan ring marks the local player on the board. */
@@ -74,46 +92,102 @@
     box-shadow: 0 0 0 2px #0b0f14, 0 0 0 4px #00e5ff;
 }
 
+/* Death reaction: one quick grey-out. Only opacity/filter are animated, never
+   transform, so the player keeps its renderer-written position. */
 #game-board .player.dead {
-    opacity: 0.25;
-    filter: grayscale(1);
+    animation: player-down 0.45s ease-out forwards;
 }
 
-/* Bombs pulse a red ring. The pulse lives on ::after so the translate3d()
-   transform written by the renderer on the bomb itself is never overwritten. */
-#game-board .bomb {
+@keyframes player-down {
+    from {
+        opacity: 1;
+        filter: grayscale(0);
+    }
+    to {
+        opacity: 0.25;
+        filter: grayscale(1);
+    }
+}
+
+/* Bombs: a 💣 emoji with a pulsing danger ring. Both live on pseudo-elements,
+   so the renderer's translate3d() transform on the bomb stays untouched.
+   :not(.powerup) keeps these rules off the bomb power-up (it has both classes). */
+#game-board .bomb:not(.powerup) {
     z-index: 3;
-    border: 2px solid #000;
-    border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, #6b6b6b, #111 70%);
+    display: grid;
+    place-items: center;
+    background: none;
+    border: none;
 }
 
-#game-board .bomb::after {
+#game-board .bomb:not(.powerup)::before {
+    content: '💣';
+    font-size: 34px;
+    line-height: 1;
+    text-shadow: 0 2px 3px rgba(0, 0, 0, 0.45);
+    animation: bomb-bob 0.65s ease-in-out infinite;
+}
+
+/* The ring stays inside the tile: paint containment clips the bomb's children
+   to its 50px box anyway. */
+#game-board .bomb:not(.powerup)::after {
     content: '';
     position: absolute;
-    inset: 26%;
-    border: 3px solid rgba(255, 70, 70, 0.9);
+    inset: 6%;
+    border: 3px solid rgba(255, 70, 70, 0.85);
     border-radius: 50%;
-    animation: bomb-pulse 0.6s ease-out infinite;
+    animation: bomb-pulse 0.65s ease-out infinite;
+}
+
+@keyframes bomb-bob {
+    0%,
+    100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.12);
+    }
 }
 
 @keyframes bomb-pulse {
     from {
-        transform: scale(0.3);
-        opacity: 1;
+        transform: scale(0.55);
+        opacity: 0.9;
     }
     to {
-        transform: scale(1.6);
+        transform: scale(1);
         opacity: 0;
     }
 }
 
-/* Explosions */
+/* Explosions: warm fire gradient plus a short white flash that fades out with
+   the 500ms blast lifetime (the flash is on ::after, the tile's own
+   translate3d() stays intact). */
 #game-board .explosion {
     z-index: 4;
     border-radius: 10px;
     background: radial-gradient(circle, #fff6c4 0%, #ffb300 45%, #ff5722 78%, #b71c1c 100%);
     box-shadow: 0 0 10px rgba(255, 152, 0, 0.75);
+}
+
+#game-board .explosion::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 62%);
+    animation: blast-pop 0.3s ease-out both;
+}
+
+@keyframes blast-pop {
+    from {
+        transform: scale(0.45);
+        opacity: 1;
+    }
+    to {
+        transform: scale(1);
+        opacity: 0;
+    }
 }
 
 /* Power-ups: one colour and icon per kind (type class comes from the renderer) */
@@ -126,11 +200,44 @@
     font-size: 24px;
     line-height: 1;
     background: #ffca28;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+/* The icon breathes on its own pseudo-element, so the item's renderer-written
+   translate3d() is never overwritten. */
+#game-board .powerup::after {
+    animation: powerup-breathe 1.6s ease-in-out infinite;
+}
+
+@keyframes powerup-breathe {
+    0%,
+    100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.12);
+    }
 }
 
 #game-board .powerup.bomb {
     background: #ffca28;
     border-color: #f57f17;
+}
+
+/* Respect reduced-motion: keep the looks, drop the moving effects. */
+@media (prefers-reduced-motion: reduce) {
+    #game-board .bomb:not(.powerup)::before,
+    #game-board .bomb:not(.powerup)::after,
+    #game-board .powerup::after,
+    #game-board .explosion::after {
+        animation: none;
+    }
+
+    #game-board .player.dead {
+        animation: none;
+        opacity: 0.25;
+        filter: grayscale(1);
+    }
 }
 
 #game-board .powerup.flame {
@@ -173,6 +280,17 @@
     align-items: center;
     gap: 8px;
     margin-left: auto;
+}
+
+/* The buttons themselves come from .btn in lobby.css; only the press feedback
+   and a visible keyboard focus ring are added for the game controls. */
+.game-top-actions .btn:focus-visible {
+    outline: 2px solid #00e676;
+    outline-offset: 2px;
+}
+
+.game-top-actions .btn:active {
+    transform: translateY(1px);
 }
 
 /* Hold the fixed-size board and clip its unscaled box while it is scaled. */
