@@ -4,8 +4,7 @@ import {
   patch,
   State,
 } from '../../framework/src/index.js';
-
-const MASCOTS = ['💣', '💣', '💣'];
+import { renderMascots, renderTitle } from './components/Branding.js';
 
 //nickname entry screen: the whole box is a vnode tree, redrawn from a State
 //whenever status / error / enabled / value / visible change
@@ -37,17 +36,8 @@ export default class NicknameScreen {
       { id: 'nickname-screen', class: visible ? 'lobby' : 'lobby hidden' },
       [
         h('div', { class: 'lobby-box' }, [
-          h(
-            'div',
-            { class: 'lobby-mascots' },
-            MASCOTS.map((icon, index) =>
-              h('span', { class: `bomb bomb-${index + 1}` }, [icon]),
-            ),
-          ),
-          h('h1', { class: 'lobby-title' }, [
-            h('span', {}, ['BOMB']),
-            h('span', {}, ['ERMAN']),
-          ]),
+          renderMascots(),
+          renderTitle(),
           h('div', { id: 'lobby-status', class: 'lobby-status' }, [status]),
           h('div', { id: 'lobby-error', class: 'lobby-error', role: 'alert' }, [
             error,

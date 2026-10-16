@@ -17,12 +17,10 @@ export default class WebSocketClient {
     this.url = url;
     this.socket = null;
     this.handlers = new Map(); //message type -> list of functions
-    this.stopped = false; //true after close(): do not reconnect
   }
 
   //connect clinet to the server
   connect() {
-    this.stopped = false;
     this.socket = new WebSocket(this.url);
 
     //setup the socket event handlers
@@ -79,11 +77,5 @@ export default class WebSocketClient {
     } catch (e) {
       return null; //ignore messages that are not valid JSON
     }
-  }
-
-  //stop for good: no more reconnecting
-  close() {
-    this.stopped = true;
-    this.socket?.close();
   }
 }

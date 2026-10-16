@@ -6,10 +6,9 @@ import {
 
 //room step: host or join a room, and keep the screen in sync with the server
 export default class Rooms {
-  constructor({ client, screen, onRoomJoined, onGameState, onError } = {}) {
+  constructor({ client, screen, onGameState, onError } = {}) {
     this.client = client;
     this.screen = screen;
-    this.onRoomJoined = onRoomJoined;
     this.onGameState = onGameState;
     this.onErrorHandler = onError;
 
@@ -57,8 +56,6 @@ export default class Rooms {
 
     this.screen.setRoom(msg.room, msg.playersList, msg.isHost);
     this.emitGameState(msg.gameState || { state: msg.room?.state });
-
-    this.onRoomJoined?.({ room: msg.room, isHost: msg.isHost });
   }
 
   //the server has sent us the current state and update if players have joined/left
@@ -94,9 +91,7 @@ export default class Rooms {
   }
 
   // Room errors (host/join/leave) happen while we are not in a room, so those
-  // are the only ones that belong on the lobby screen. Once we are inside a
-  // room the server errors come from chat or moves; hand those to the active
-  // screen through onError instead of overwriting the lobby UI.
+
   onError(msg) {
     const message = msg?.message || 'Something went wrong';
 

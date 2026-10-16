@@ -99,10 +99,4 @@ export class Input {
         this.keys = { up: false, down: false, left: false, right: false };
         this.actions = { bomb: false, bombHeld: false };
     }
-
-    destroy() {
-        this.target.removeEventListener('keydown', this.onKeyDown);
-        this.target.removeEventListener('keyup', this.onKeyUp);
-        window.removeEventListener('blur', this.onBlur);
-    }
 }

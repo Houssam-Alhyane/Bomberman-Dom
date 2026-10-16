@@ -1,6 +1,5 @@
 import { h } from '../../framework/src/index.js';
-
-const MASCOTS = ['💣', '💣', '💣'];
+import { renderMascots, renderTitle } from './components/Branding.js';
 
 //pure UI: state + handlers in, vnode out. no State, no side effects, no DOM access.
 export function renderLobby(state, handlers = {}) {
@@ -18,23 +17,6 @@ export function renderLobby(state, handlers = {}) {
       ]),
     ],
   );
-}
-
-function renderMascots() {
-  return h(
-    'div',
-    { class: 'lobby-mascots' },
-    MASCOTS.map((icon, index) =>
-      h('span', { class: `bomb bomb-${index + 1}` }, [icon]),
-    ),
-  );
-}
-
-function renderTitle() {
-  return h('h1', { class: 'lobby-title' }, [
-    h('span', {}, ['BOMB']),
-    h('span', {}, ['ERMAN']),
-  ]);
 }
 
 function renderSubtitle(state) {

@@ -68,7 +68,6 @@ nicknameFlow = new Lobby({
 rooms = new Rooms({
   client,
   screen: lobby,
-  onRoomJoined: ({ room }) => console.log(`Entered ${room.name}`),
   //unlock chat while the game runs, and lock it again when we leave (the
   //server/room sends null) - Rooms emits the room's game state on every change
   onGameState: (gameState) => {
