@@ -95,6 +95,13 @@ class GameMap {
 
     return true;
   }
+
+  // Remove a block tile (called when an explosion destroys it).
+  removeBlock(x, y) {
+    this.tiles = this.tiles.filter(
+      (tile) => !(tile.type === 'block' && tile.x === x && tile.y === y),
+    );
+  }
 }
 
 module.exports = { GameMap, TILE_SIZE, PLAYER_SIZE };

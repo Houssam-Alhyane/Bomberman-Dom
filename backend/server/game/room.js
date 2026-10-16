@@ -1,4 +1,7 @@
 const { GameMap, TILE_SIZE } = require('./map');
+const { initGameState } = require('./gameState');
+const { initPlayerStats } = require('./playerStats');
+const { stopTicking } = require('./gameLoop');
 
 const MAX_PLAYERS = 4;
 const MIN_PLAYERS = 2;
@@ -32,6 +35,7 @@ class Room {
     this.onGameStart = null; // set when starting a game, called when the game starts
 
     this.map = null; // server map, built when the game starts
+    this.gameState = null; // authoritative bombs/explosions/powerups/damage
   }
 
   get hostId() {
@@ -111,19 +115,12 @@ class Room {
   // back to a clean waiting room (timers stopped, state = waiting)
   reset() {
     this.clearTimers();
+    stopTicking(this);
     this.waitTimerStartedAt = null;
     this.readyTimerStartedAt = null;
     this.state = 'waiting';
+    this.gameState = null;
     this.emitStateChange();
-  }
-
-  // call this when the game is over: removes everybody and resets
-  endGame() {
-    this.players.forEach((p) => {
-      p.roomId = null;
-    });
-    this.players = [];
-    this.reset();
   }
 
   checkStartConditions() {
@@ -193,13 +190,16 @@ class Room {
     // build the map on the server; clients receive it in the start message
     this.map = new GameMap(15, 13, this.id);
 
-    // give each player their spawn (same order as the frontend PlayerManager)
+    // initialise authoritative game state (bombs, explosions, powerups)
+    initGameState(this);
 
+    // give each player their spawn and default stats
     this.players.forEach((player, index) => {
       const spawn = SPAWNS[index];
 
       player.x = spawn.x * TILE_SIZE;
       player.y = spawn.y * TILE_SIZE;
+      initPlayerStats(player);
     });
 
     this.emitStateChange();
