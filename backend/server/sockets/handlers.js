@@ -1,6 +1,6 @@
-const { joinLobby } = require('./lobby');
+const { checkNickname } = require('./nickname');
 const { send } = require('./broadcast');
-const { chat } = require('./chat');
+const { chat, globalChat } = require('./chat');
 const { createRoom, joinRoom, leaveRoom } = require('./rooms');
 const { move } = require('./movement');
 const { placeBomb } = require('./bombs');
@@ -25,7 +25,7 @@ function handleJoin(socket, msg) {
   // the nickname is set once, a second join must not rename the player
   if (player.nickname) return;
 
-  const result = joinLobby(getPlayerList(), player, msg.nickname);
+  const result = checkNickname(getPlayerList(), player, msg.nickname);
 
   if (!result.success) {
     send(socket, { type: 'error', message: result.message });
@@ -68,6 +68,10 @@ function handleMessage(socket, wss, msg) {
 
     case 'chat':
       chat(socket, player, roomManager, msg.message);
+      return;
+
+    case 'global_chat':
+      globalChat(socket, player, wss, msg.message);
       return;
 
     case 'move':

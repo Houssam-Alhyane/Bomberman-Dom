@@ -1,8 +1,9 @@
 const { send, broadcast, broadcastToRoom } = require('./broadcast');
-const { checkNickname } = require('./nickname');
+const { joinLobby } = require('./lobby');
 const { getPlayerList } = require('./state');
-const { startTicking } = require('../game/gameLoop');
+const { startTicking, finishGame } = require('../game/gameLoop');
 const { playerStats } = require('../game/playerStats');
+
 //get a list of players in a room with their id and nickname
 function getRoomPlayers(room) {
   return room.players.map((player) => ({
@@ -56,6 +57,12 @@ function createRoom(socket, wss, player, roomManager) {
 
   const room = roomManager.createRoom();
 
+  // the server is at its room cap, tell the player instead of crashing
+  if (!room) {
+    send(socket, { type: 'error', message: 'Server is full, try again later' });
+    return;
+  }
+
   //broadcast every timer/state change
   room.onStateChange = () => broadcastRoomState(room);
 
@@ -71,7 +78,8 @@ function createRoom(socket, wss, player, roomManager) {
         nickname: p.nickname,
         ...playerStats(p),
       })),
-      map: room.map.tiles, //server-generated map, shared by all clients
+      //server-generated map
+      map: room.map.tiles,
     });
   };
 
@@ -89,7 +97,7 @@ function joinRoom(socket, wss, player, roomManager, roomId) {
     return;
   }
 
-  const nicknameCheck = checkNickname(getPlayerList(), player, player.nickname);
+  const nicknameCheck = joinLobby(getPlayerList(), player, player.nickname);
 
   const room = roomManager.getRoom(roomId);
 
@@ -139,6 +147,16 @@ function removeFromRoom(wss, player, roomManager) {
   const roomName = room.name;
 
   room.removePlayer(player.id);
+
+  // in a running match the other clients must drop this player's sprite
+  if (room.state === 'playing') {
+    broadcastToRoom(room, { type: 'player_left', playerId: player.id });
+
+    // a match needs at least two players: the last one left standing wins
+    if (room.getPlayerCount() < 2) {
+      finishGame(room, broadcastToRoom);
+    }
+  }
 
   if (room.isEmpty()) {
     roomManager.removeRoom(room.id);

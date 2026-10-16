@@ -19,6 +19,7 @@ engine.wsClient = client;
 
 let me = { id: null, nickname: '' };
 let chat = null;
+let globalChat = null;
 let rooms = null;
 let nicknameFlow = null;
 let matchHandlers = []; // unsubscribe functions for the active match's WebSocket events
@@ -40,10 +41,17 @@ const chatBox = new ChatBox(gameScreen.chat, {
 gameScreen.onToggleChat = () => chatBox.toggle();
 const gameOver = new GameOverScreen(gameScreen.gameOver, { onLeave: () => leaveGame() });
 
+// Global chat lives outside the lobby screen so re-renders never wipe it.
+const globalChatBox = new ChatBox(document.getElementById('global-chat'), {
+  title: 'Global Chat',
+  onSend: (text) => globalChat?.send(text),
+});
+
 const lobby = new LobbyScreen({
   onHost: () => rooms?.host(),
   onJoin: (roomId) => rooms?.join(roomId),
   onLeave: () => rooms?.leave(),
+  onGlobalChat: () => globalChatBox.toggle(),
 });
 
 nicknameFlow = new Lobby({
@@ -51,6 +59,7 @@ nicknameFlow = new Lobby({
   screen: nickname,
   onJoined: (player) => {
     me = player;
+    globalChat?.setSelfId(player.id);
     nickname.hide();
     lobby.show(player);
   },
@@ -77,6 +86,15 @@ chat = new Chat({
   client,
   onMessage: (entry) => chatBox.add(entry),
   onError: (text) => chatBox.setError(text),
+});
+
+// Global chat is always open (no room, no game needed).
+globalChat = new Chat({
+  client,
+  channel: SERVER_EVENTS.GLOBAL_CHAT,
+  locked: false,
+  onMessage: (entry) => globalChatBox.add(entry),
+  onError: (text) => globalChatBox.setError(text),
 });
 
 // Local moves go to the server; remote moves are bound per match in startMatch.
@@ -107,6 +125,7 @@ client.on(CONNECTION_EVENTS.CLOSE, () => teardownMatch());
 function startMatch(msg) {
   detachMatchHandlers();
 
+  globalChatBox.close();
   lobby.hide();
   nickname.hide();
   gameScreen.show();

@@ -4,10 +4,11 @@ import { renderLobby } from './LobbyView.js';
 //lobby logic: owns the State and the public API, wires events, and patches the DOM.
 //all rendering lives in LobbyView, which is pure.
 export default class LobbyScreen {
-  constructor({ onHost, onJoin, onLeave } = {}) {
+  constructor({ onHost, onJoin, onLeave, onGlobalChat } = {}) {
     this.onHost = onHost;
     this.onJoin = onJoin;
     this.onLeave = onLeave;
+    this.onGlobalChat = onGlobalChat;
 
     this.root = document.getElementById('app');
 
@@ -30,6 +31,7 @@ export default class LobbyScreen {
       onLeave: () => this.onLeave?.(),
       onShowJoin: () => this.setView('join'),
       onShowMenu: () => this.setView('menu'),
+      onGlobalChat: () => this.onGlobalChat?.(),
     };
 
     this.oldVNode = null;

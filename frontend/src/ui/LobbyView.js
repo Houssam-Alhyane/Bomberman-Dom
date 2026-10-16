@@ -14,6 +14,7 @@ export function renderLobby(state, handlers = {}) {
         renderSubtitle(state),
         renderError(state),
         ...renderBody(state, handlers),
+        renderGlobalChatButton(handlers),
       ]),
     ],
   );
@@ -72,6 +73,19 @@ function renderBody(state, handlers) {
     default:
       return [renderMenu(handlers)];
   }
+}
+
+function renderGlobalChatButton(handlers) {
+  return h(
+    'button',
+    {
+      id: 'global-chat-btn',
+      class: 'btn btn-secondary btn-block',
+      type: 'button',
+      onClick: () => handlers.onGlobalChat?.(),
+    },
+    ['Global Chat'],
+  );
 }
 
 function renderMenu(handlers) {
