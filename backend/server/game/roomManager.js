@@ -1,7 +1,7 @@
 const Room = require('./room');
 
 // Cap the number of live rooms so a connection flood cannot fill memory.
-const MAX_ROOMS = 2;
+const MAX_ROOMS = 100;
 
 class RoomManager {
   constructor() {
