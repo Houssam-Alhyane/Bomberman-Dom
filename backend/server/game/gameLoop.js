@@ -65,8 +65,8 @@ function tick(room, broadcast) {
         broadcast(room, { type: 'block_destroyed', x: tile.x, y: tile.y });
 
         // maybe drop a power-up
-        if (gs.random() < DROP_CHANCE) {
-          const puType = POWERUP_TYPES[Math.floor(gs.random() * POWERUP_TYPES.length)];
+        if (Math.random() < DROP_CHANCE) {
+          const puType = POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)];
           const pu = { id: newId(gs, 'pu'), x: tile.x, y: tile.y, type: puType };
           gs.powerUps.push(pu);
           broadcast(room, { type: 'powerup_spawn', x: tile.x, y: tile.y, powerUpType: puType });

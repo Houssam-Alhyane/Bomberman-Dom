@@ -3,16 +3,10 @@
 const TILE_SIZE = 50;
 const PLAYER_SIZE = 25;
 
-// Seeded random so a given seed always produces the same layout.
-function makeRandom(seed) {
-  return () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296;
-}
-
 class GameMap {
-  constructor(width, height, seed = 1) {
+  constructor(width, height) {
     this.width = width;
     this.height = height;
-    this.random = makeRandom(seed);
     this.tiles = [];
 
     this.createWalls();
@@ -60,7 +54,7 @@ class GameMap {
     for (let y = 0; y < this.height; y++) {
       for (let x = 0; x < this.width; x++) {
         if (this.isWall(x, y) || this.isSpawn(x, y)) continue;
-        if (this.random() < 0.5) this.tiles.push({ x, y, type: 'block' });
+        if (Math.random() < 0.5) this.tiles.push({ x, y, type: 'block' });
       }
     }
   }

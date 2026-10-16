@@ -188,7 +188,7 @@ class Room {
     this.state = 'playing';
 
     // build the map on the server; clients receive it in the start message
-    this.map = new GameMap(15, 13, this.id);
+    this.map = new GameMap(15, 13);
 
     // initialise authoritative game state (bombs, explosions, powerups)
     initGameState(this);
