@@ -1,7 +1,7 @@
 const { send, broadcast, broadcastToRoom } = require('./broadcast');
 const { joinLobby } = require('./lobby');
 const { getPlayerList } = require('./state');
-const { startTicking } = require('../game/gameLoop');
+const { startTicking, finishGame } = require('../game/gameLoop');
 const { playerStats } = require('../game/playerStats');
 //get a list of players in a room with their id and nickname
 function getRoomPlayers(room) {
@@ -143,6 +143,11 @@ function removeFromRoom(wss, player, roomManager) {
   // in a running match the other clients must drop this player's sprite
   if (room.state === 'playing') {
     broadcastToRoom(room, { type: 'player_left', playerId: player.id });
+
+    // a match needs at least two players: the last one left standing wins
+    if (room.getPlayerCount() < 2) {
+      finishGame(room, broadcastToRoom);
+    }
   }
 
   if (room.isEmpty()) {

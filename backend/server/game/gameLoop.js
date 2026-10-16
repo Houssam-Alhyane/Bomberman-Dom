@@ -31,6 +31,21 @@ function stopTicking(room) {
   gs.tickTimer = null;
 }
 
+// End the match immediately and tell the room who won.
+// Used when the game can no longer continue, e.g. a player left and only one
+// competitor is left standing.
+function finishGame(room, broadcast) {
+  const gs = room.gameState;
+  if (!gs || gs.finished) return;
+
+  const remaining = room.players;
+  gs.finished = true;
+  gs.winnerId = remaining.length === 1 ? remaining[0].id : null;
+
+  broadcast(room, { type: 'game_over', winnerId: gs.winnerId });
+  stopTicking(room);
+}
+
 function tick(room, broadcast) {
   const gs = room.gameState;
   const map = room.map;
@@ -66,10 +81,21 @@ function tick(room, broadcast) {
 
         // maybe drop a power-up
         if (Math.random() < DROP_CHANCE) {
-          const puType = POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)];
-          const pu = { id: newId(gs, 'pu'), x: tile.x, y: tile.y, type: puType };
+          const puType =
+            POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)];
+          const pu = {
+            id: newId(gs, 'pu'),
+            x: tile.x,
+            y: tile.y,
+            type: puType,
+          };
           gs.powerUps.push(pu);
-          broadcast(room, { type: 'powerup_spawn', x: tile.x, y: tile.y, powerUpType: puType });
+          broadcast(room, {
+            type: 'powerup_spawn',
+            x: tile.x,
+            y: tile.y,
+            powerUpType: puType,
+          });
         }
       }
     });
@@ -100,7 +126,9 @@ function tick(room, broadcast) {
   });
 
   // --- advance explosion visuals --------------------------------------------
-  gs.explosions.forEach((e) => { e.remaining -= TICK_MS; });
+  gs.explosions.forEach((e) => {
+    e.remaining -= TICK_MS;
+  });
   gs.explosions = gs.explosions.filter((e) => e.remaining > 0);
 
   // --- power-up collection --------------------------------------------------
@@ -140,4 +168,5 @@ function tick(room, broadcast) {
 module.exports = {
   startTicking,
   stopTicking,
+  finishGame,
 };
