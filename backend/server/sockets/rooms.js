@@ -152,8 +152,9 @@ function removeFromRoom(wss, player, roomManager) {
   if (room.state === 'playing') {
     broadcastToRoom(room, { type: 'player_left', playerId: player.id });
 
-    // a match needs at least two players: the last one left standing wins
-    if (room.getPlayerCount() < 2) {
+    //check live players and finish the game if only one is left
+    const alive = room.players.filter((p) => p.alive);
+    if (alive.length < 2) {
       finishGame(room, broadcastToRoom);
     }
   }

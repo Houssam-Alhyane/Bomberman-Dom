@@ -13,13 +13,15 @@ function endMatch(room, winnerId, broadcast) {
 }
 
 // End the match immediately and tell the room who won.
+// Called when players disconnect mid-match: pick the winner from alive players,
+// not from everyone still in the room (dead players may not have left yet).
 function finishGame(room, broadcast) {
   const gs = room.gameState;
   if (!gs || gs.finished) return;
 
-  const remaining = room.players;
+  const alive = room.players.filter((p) => p.alive);
 
-  endMatch(room, remaining.length === 1 ? remaining[0].id : null, broadcast);
+  endMatch(room, alive.length === 1 ? alive[0].id : null, broadcast);
 }
 
 //after a blast: two or more survivors keep playing, one wins, none is a draw
