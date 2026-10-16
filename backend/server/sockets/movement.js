@@ -1,26 +1,30 @@
 const { send, broadcastToRoom } = require('./broadcast');
 
-// A fair client moves 1px per tick (~60px/s, ~85px/s diagonally).
-// MAX_STEP stops a single teleport; MAX_SPEED caps sustained travel per
-// second; MAX_BURST is how much travel can be saved up for a lag spike.
+// A fair client moves speed px per tick (~60 ticks/s).
+// MAX_STEP stops a single teleport; BASE_SPEED is the travel budget per second
+// at speed=1; MAX_BURST is how much travel can be saved up for a lag spike.
 const MAX_STEP = 25; // largest single move (px)
-const MAX_SPEED = 100; // max sustained travel (px per second)
+const BASE_SPEED = 100; // px per second at speed=1
 const MAX_BURST = 50; // saved-up travel for lag spikes (px)
 
 function isValidPosition(value) {
   return typeof value === 'number' && Number.isFinite(value);
 }
 
-// Token bucket: refills at MAX_SPEED px/s, never more than one second saved up.
-// Returns false when the move would exceed the allowed travel.
+// Token bucket: refills at BASE_SPEED * player.speed px/s, never more than
+// one second saved up. Returns false when the move would exceed the allowed
+// travel.
 function travelAllowed(player, distance) {
   const now = Date.now();
   const elapsed = now - (player.lastMoveAt || now);
   player.lastMoveAt = now;
 
+  const speed = player.speed || 1;
+  const maxSpeed = BASE_SPEED * speed;
+
   player.budget = Math.min(
     MAX_BURST,
-    (player.budget ?? MAX_BURST) + (elapsed / 1000) * MAX_SPEED,
+    (player.budget ?? MAX_BURST) + (elapsed / 1000) * maxSpeed,
   );
 
   if (distance > player.budget) return false;
@@ -50,6 +54,11 @@ function move(socket, player, roomManager, msg) {
 
   // ignore moves outside a running game
   if (room.state !== 'playing' || !room.map) {
+    return;
+  }
+
+  // dead players cannot move
+  if (!player.alive) {
     return;
   }
 

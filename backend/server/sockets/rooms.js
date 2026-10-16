@@ -1,6 +1,8 @@
 const { send, broadcast, broadcastToRoom } = require('./broadcast');
 const { checkNickname } = require('./nickname');
 const { getPlayerList } = require('./state');
+const { startTicking } = require('../game/gameLoop');
+const { playerStats } = require('../game/playerStats');
 //get a list of players in a room with their id and nickname
 function getRoomPlayers(room) {
   return room.players.map((player) => ({
@@ -59,9 +61,16 @@ function createRoom(socket, wss, player, roomManager) {
 
   //broadcast the start of the game to all players in the room
   room.onGameStart = () => {
+    // start the authoritative server tick (bombs, explosions, damage…)
+    startTicking(room, broadcastToRoom);
+
     broadcastToRoom(room, {
       type: 'start',
-      players: getRoomPlayers(room),
+      players: room.players.map((p) => ({
+        id: p.id,
+        nickname: p.nickname,
+        ...playerStats(p),
+      })),
       map: room.map.tiles, //server-generated map, shared by all clients
     });
   };

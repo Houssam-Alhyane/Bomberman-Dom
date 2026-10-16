@@ -6,5 +6,4 @@ function joinLobby(players, player, nickname) {
 
 module.exports = {
   joinLobby,
-  checkNickname,
 };
