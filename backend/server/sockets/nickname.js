@@ -10,20 +10,6 @@ function checkNickname(players, player, nickname) {
 
   const cleanNickname = nickname.trim();
 
-  const nicknameExists = players.some(
-    (other) =>
-      other.id !== player.id &&
-      other.nickname &&
-      other.nickname.toLowerCase() === cleanNickname.toLowerCase(),
-  );
-
-  if (nicknameExists) {
-    return {
-      success: false,
-      message: 'Nickname already exists',
-    };
-  }
-
   if (cleanNickname.length > 20 || cleanNickname.length < 3) {
     return {
       success: false,

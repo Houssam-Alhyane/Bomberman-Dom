@@ -1,5 +1,5 @@
 const { send, broadcast, broadcastToRoom } = require('./broadcast');
-const { checkNickname } = require('./nickname');
+const { joinLobby } = require('./lobby');
 const { getPlayerList } = require('./state');
 const { startTicking } = require('../game/gameLoop');
 const { playerStats } = require('../game/playerStats');
@@ -89,7 +89,7 @@ function joinRoom(socket, wss, player, roomManager, roomId) {
     return;
   }
 
-  const nicknameCheck = checkNickname(getPlayerList(), player, player.nickname);
+  const nicknameCheck = joinLobby(getPlayerList(), player, player.nickname);
 
   const room = roomManager.getRoom(roomId);
 
