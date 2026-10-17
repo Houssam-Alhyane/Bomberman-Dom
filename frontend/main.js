@@ -10,8 +10,10 @@ import HUD from './src/ui/HUD.js';
 import ChatBox from './src/ui/components/ChatBox.js';
 import GameOverScreen from './src/ui/GameOverScreen.js';
 import { GameEngine } from './src/engine/Game.js';
+import { mountFooter } from './src/ui/components/Footer.js';
 
 const root = document.getElementById('app');
+mountFooter();
 
 const client = new WebSocketClient();
 const engine = new GameEngine();

@@ -1,0 +1,161 @@
+/* ==========================================================================
+   Bomberman Animated Footer Styles
+   ========================================================================== */
+
+/* Page layout: ensures footer is naturally anchored at the bottom across all screens */
+body {
+    min-height: 100vh;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+#app {
+    flex: 1 0 auto;
+    min-height: 0;
+}
+
+/* Footer container */
+.app-footer {
+    flex-shrink: 0;
+    position: relative;
+    z-index: 95;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 14px 20px 18px;
+    user-select: none;
+}
+
+/* Centered brand unit */
+.footer-brand {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    cursor: default;
+    transition: transform 0.25s ease;
+}
+
+.footer-brand:hover {
+    transform: translateY(-1px);
+}
+
+/* Title text */
+.footer-title {
+    font-size: 0.95rem;
+    font-weight: 900;
+    letter-spacing: 0.35em;
+    margin-right: -0.35em;
+    text-transform: uppercase;
+    line-height: 1.2;
+}
+
+/* Part 1: BOMB (Red pulse and glow) */
+.footer-part-bomb {
+    color: #ff5252;
+    animation: footer-glow-bomb 3s ease-in-out infinite;
+}
+
+/* Part 2: ERMAN (Green pulse and glow) */
+.footer-part-erman {
+    color: #00e676;
+    animation: footer-glow-erman 3s ease-in-out infinite;
+}
+
+/* Hover glow boost */
+.footer-brand:hover .footer-part-bomb {
+    text-shadow: 0 0 14px rgba(255, 82, 82, 0.9), 0 0 28px rgba(255, 82, 82, 0.5);
+}
+
+.footer-brand:hover .footer-part-erman {
+    text-shadow: 0 0 14px rgba(0, 230, 118, 0.9), 0 0 28px rgba(0, 230, 118, 0.5);
+}
+
+/* Soft animated underline */
+.footer-line {
+    width: 110px;
+    height: 2px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, transparent, #ff5252, #00e676, transparent);
+    background-size: 200% 100%;
+    animation: footer-line-shimmer 3s ease-in-out infinite;
+    transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.footer-brand:hover .footer-line {
+    opacity: 1;
+    transform: scaleX(1.12);
+}
+
+/* Animations */
+@keyframes footer-glow-bomb {
+    0%, 100% {
+        color: #ff5252;
+        text-shadow: 0 0 8px rgba(255, 82, 82, 0.4), 0 0 16px rgba(255, 82, 82, 0.2);
+    }
+    50% {
+        color: #ff6e6e;
+        text-shadow: 0 0 12px rgba(255, 82, 82, 0.75), 0 0 24px rgba(255, 82, 82, 0.35);
+    }
+}
+
+@keyframes footer-glow-erman {
+    0%, 100% {
+        color: #00e676;
+        text-shadow: 0 0 8px rgba(0, 230, 118, 0.4), 0 0 16px rgba(0, 230, 118, 0.2);
+    }
+    50% {
+        color: #33eb8f;
+        text-shadow: 0 0 12px rgba(0, 230, 118, 0.75), 0 0 24px rgba(0, 230, 118, 0.35);
+    }
+}
+
+@keyframes footer-line-shimmer {
+    0% {
+        background-position: 100% 0;
+        opacity: 0.55;
+        transform: scaleX(0.85);
+    }
+    50% {
+        background-position: 0% 0;
+        opacity: 1;
+        transform: scaleX(1);
+    }
+    100% {
+        background-position: -100% 0;
+        opacity: 0.55;
+        transform: scaleX(0.85);
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 560px) {
+    .app-footer {
+        padding: 10px 16px 14px;
+    }
+
+    .footer-title {
+        font-size: 0.82rem;
+        letter-spacing: 0.28em;
+        margin-right: -0.28em;
+    }
+
+    .footer-line {
+        width: 85px;
+    }
+}
+
+/* Accessibility: respect user preference for reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .footer-part-bomb,
+    .footer-part-erman,
+    .footer-line {
+        animation: none;
+    }
+
+    .footer-brand {
+        transition: none;
+    }
+}
+

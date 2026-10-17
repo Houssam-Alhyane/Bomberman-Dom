@@ -36,7 +36,10 @@ export class GameEngine {
   }
 
   init(container, { localPlayerId = 'local', players = [], map = [], wsClient = null } = {}) {
-    this.destroy(); // stop loop , listeners & clean render , input
+    this.destroy(); // stop loop , listeners & clean render , 
+    // 
+    
+    t
     this.state.reset(); // reset state to default value
     this.state.localPlayerId = localPlayerId;
     if (wsClient) this.wsClient = wsClient;
