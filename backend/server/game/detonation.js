@@ -1,8 +1,4 @@
-// Resolving a bomb blast: which tiles it covers, what it destroys, and who it
-// hurts. Called once per detonated bomb by the room's tick.
-//
-// The room's gameState stays the single source of truth for live bombs,
-// explosions and power-ups; this module only applies a blast to it.
+// resolving a bomb blast: what it covers, what it breaks, and who it hurts
 
 const {
   TICK_MS,
@@ -13,7 +9,7 @@ const {
 const { explosionCover, isCovered } = require('./grid');
 const { newId } = require('./gameState');
 
-//tick every live bomb down and hand back the ones that reached zero
+// tick every live bomb down and hand back the ones that reached zero
 function advanceBombs(gs) {
   const detonated = [];
 
@@ -22,6 +18,7 @@ function advanceBombs(gs) {
     if (bomb.timer <= 0) detonated.push(bomb);
   });
 
+  // clear the spent bombs so they cannot go off twice
   if (detonated.length) {
     gs.bombs = gs.bombs.filter((bomb) => bomb.timer > 0);
   }
@@ -29,7 +26,7 @@ function advanceBombs(gs) {
   return detonated;
 }
 
-//remember one flame tile so the client can draw it for a moment
+// remember one flame tile so the client can draw it for a moment
 function addExplosion(gs, tile) {
   gs.explosions.push({
     id: newId(gs, 'exp'),
@@ -39,9 +36,9 @@ function addExplosion(gs, tile) {
   });
 }
 
-//a broken block sometimes leaves a random power-up behind
+// a broken block sometimes leaves a random power-up behind
 function dropPowerUp(room, gs, tile, broadcast) {
-  if (Math.random() >= DROP_CHANCE) return;
+  if (Math.random() >= DROP_CHANCE) return; // 70% of the time nothing drops
 
   const type = POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)];
 
@@ -60,7 +57,7 @@ function dropPowerUp(room, gs, tile, broadcast) {
   });
 }
 
-//clear a block from the map, tell the room, then roll for a power-up
+// clear a block from the map, tell the room, then roll for a power-up
 function destroyBlock(room, gs, tile, broadcast) {
   room.map.removeBlock(tile.x, tile.y);
   broadcast(room, { type: 'block_destroyed', x: tile.x, y: tile.y });
@@ -68,7 +65,7 @@ function destroyBlock(room, gs, tile, broadcast) {
   dropPowerUp(room, gs, tile, broadcast);
 }
 
-//one life per blast; zero lives means dead, already dead players are skipped
+// one life per blast, dead players are skipped
 function damagePlayers(room, covered, broadcast) {
   room.players.forEach((player) => {
     if (!player.alive) return;
@@ -89,7 +86,7 @@ function damagePlayers(room, covered, broadcast) {
   });
 }
 
-//apply one detonated bomb: cover its tiles, break what is breakable, then damage
+// apply one detonated bomb: cover its tiles, break what is breakable, then damage
 function detonate(room, bomb, broadcast) {
   const gs = room.gameState;
   const map = room.map;

@@ -1,8 +1,7 @@
-// the three collectable power-up kinds.
+// the three collectable power-up kinds
 export const POWERUP_TYPES = ['bomb', 'flame', 'speed'];
 
-// a collectable item sitting on a tile.
-// Display-only: the server decides spawning, collection and stat changes.
+// an item on the board, display only, the server owns spawning and collecting
 export class PowerUp {
   constructor(id, x, y, type) {
     this.id = id;

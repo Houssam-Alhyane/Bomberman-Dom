@@ -3,18 +3,13 @@ import { Bomb } from './Bomb.js';
 import { Explosion } from './Explosion.js';
 import { PowerUp, POWERUP_TYPES } from './PowerUp.js';
 
-// fixed visual rule: how long an explosion tile displays on the client
+// flames are drawn for this long, matches EXPLOSION_DURATION on the server
 const EXPLOSION_DURATION = 500;
 
-// a blast range never exceeds this (matches server).
+// a blast range never exceeds this, matches the server's MAX_RANGE
 export const MAX_RANGE = 10;
 
-// The BombManager is now a *display-only* layer.
-// All gameplay decisions (detonation, damage, powerups, game over) come from
-// the server. The client only:
-//   1. Requests bomb placement (server decides if it's valid)
-//   2. Displays bombs, explosions, powerups from server events
-//   3. Ticks visual timers for animations
+// display only, the client asks for bombs and draws whatever the server sends
 export class BombManager {
   constructor() {
     this.nextId = 1;
@@ -22,47 +17,47 @@ export class BombManager {
     this.announced = false;
   }
 
-  // register the outgoing fact handler, wired to the socket elsewhere.
+  // remember how to send a fact out to the socket
   onEvent(callback) {
     this.eventHandler = callback;
   }
 
-  // Request a bomb placement. The server will validate and broadcast if accepted.
+  // ask for a bomb, the server validates it and broadcasts if it is allowed
   placeBomb(player, state) {
     if (!player?.alive || !state) return;
 
     const tile = this.tileOf(player);
 
-    // local duplicate check (avoids sending obviously bad requests)
+    // local check only, so we don't send an obviously silly request
     const taken = state.bombs.some((bomb) => bomb.x === tile.x && bomb.y === tile.y);
     if (taken) return;
 
-    // just send the request — no range, no capacity check, server decides
+    // no range and no capacity, the server decides both
     this.emit({ type: 'place_bomb' });
   }
 
-  // Advance visual timers only — no detonation, no damage, no powerups.
+  // advance the visual timers only, no detonation and no damage here
   update(frameTime, state, map) {
     if (!state || !map) return;
 
-    // tick bomb visual timers (for animation/pulsing)
+    // bombs tick down on their own timers
     state.bombs.forEach((bomb) => bomb.tick(frameTime));
-    // remove bombs whose timers expired locally (server will send explosion event)
+    // drop the ones that ran out, the server sends the real explosion
     state.bombs = state.bombs.filter((bomb) => !bomb.expired);
 
-    // tick explosion visual timers
+    // flames fade on their own timers too
     state.explosions.forEach((explosion) => explosion.tick(frameTime));
     state.explosions = state.explosions.filter((explosion) => !explosion.expired);
   }
 
-  // Apply an authoritative server event to the local display state.
+  // turn one server message into local display state
   applyRemote(event, state) {
     if (!event || !state) return;
 
-    // Server confirmed a bomb placement
+    // the server accepted a bomb
     if (event.type === 'place_bomb') {
       const range = Math.max(1, Math.min(MAX_RANGE, event.range || 1));
-      // avoid duplicate if we already added it from a prior message
+      // skip it if we already added one from an earlier message
       const exists = state.bombs.some((b) => b.x === event.x && b.y === event.y);
       if (!exists) {
         state.bombs.push(
@@ -72,14 +67,14 @@ export class BombManager {
       return;
     }
 
-    // Server says an explosion happened — add visual explosion tiles
+    // an explosion happened, add one flame per tile
     if (event.type === 'explosion') {
       (event.tiles || []).forEach((tile) => {
         state.explosions.push(
           new Explosion(this.newId('exp'), tile.x, tile.y, EXPLOSION_DURATION),
         );
       });
-      // remove any bombs at the explosion origin (the server detonated them)
+      // drop the bomb that was sitting at the origin
       if (event.tiles && event.tiles.length > 0) {
         const origin = event.tiles[0];
         state.bombs = state.bombs.filter(
@@ -89,17 +84,17 @@ export class BombManager {
       return;
     }
 
-    // Server destroyed a block — update the local map copy
+    // a block went away, remove it from our copy of the map
     if (event.type === 'block_destroyed') {
       if (state.map) {
-        state.map.tiles = state.map.tiles.filter(
+        state.map = state.map.filter(
           (t) => !(t.type === 'block' && t.x === event.x && t.y === event.y),
         );
       }
       return;
     }
 
-    // Server spawned a power-up
+    // a power-up appeared
     if (event.type === 'powerup_spawn') {
       if (!POWERUP_TYPES.includes(event.powerUpType)) return;
       if (!Number.isInteger(event.x) || !Number.isInteger(event.y)) return;
@@ -109,12 +104,12 @@ export class BombManager {
       return;
     }
 
-    // Server confirmed a power-up was collected
+    // a power-up was picked up
     if (event.type === 'powerup_collected') {
       state.powerUps = state.powerUps.filter(
         (item) => !(item.x === event.x && item.y === event.y),
       );
-      // update local player stats from server
+      // copy the server's new stats onto that player
       if (event.stats) {
         const player = state.players.get(event.playerId);
         if (player) {
@@ -124,7 +119,7 @@ export class BombManager {
       return;
     }
 
-    // Server says a player got hit
+    // a player took a hit
     if (event.type === 'player_hit') {
       const player = state.players.get(event.playerId);
       if (player) {
@@ -133,7 +128,7 @@ export class BombManager {
       return;
     }
 
-    // Server declares game over
+    // the match is decided
     if (event.type === 'game_over') {
       const winnerId = event.winnerId ?? null;
       if (winnerId !== null && !state.players.has(winnerId)) return;
@@ -143,17 +138,17 @@ export class BombManager {
     }
   }
 
-  // hand an outgoing fact to the network layer.
+  // hand an outgoing fact to the network layer
   emit(fact) {
     this.eventHandler?.(fact);
   }
 
-  // unique id for a new entity.
+  // unique id for a new local entity
   newId(prefix) {
     return `${prefix}-${this.nextId++}`;
   }
 
-  // the single tile a player centers on.
+  // the one tile under the middle of the player
   tileOf(player) {
     return {
       x: Math.floor((player.x + PLAYER_SIZE / 2) / TILE_SIZE),

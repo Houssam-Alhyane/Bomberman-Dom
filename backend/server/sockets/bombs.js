@@ -1,12 +1,10 @@
+// bomb placement: the client asks for a bomb, the server decides
+
 const { send, broadcastToRoom } = require('./broadcast');
 const { tileOf } = require('../game/grid');
 const { BOMB_TIMER } = require('../game/config');
 
-function isValidNumber(value) {
-  return typeof value === 'number' && Number.isFinite(value);
-}
-
-// resolve the sender's room or report why not
+// resolve the sender's room, or report why not
 function roomFor(socket, player, roomManager) {
   if (!player.nickname) {
     send(socket, { type: 'error', message: 'Set a nickname first' });
@@ -28,9 +26,7 @@ function roomFor(socket, player, roomManager) {
   return room;
 }
 
-// Authoritative bomb placement.
-// The server uses its own player stats (bombs capacity, flameRange) and game
-// state (live bomb count) — the client cannot choose arbitrary values.
+// the client asks, the server decides using its own stats
 function placeBomb(socket, player, roomManager) {
   const room = roomFor(socket, player, roomManager);
   if (!room) return;
@@ -43,10 +39,10 @@ function placeBomb(socket, player, roomManager) {
 
   const gs = room.gameState;
 
-  // a bomb only lands on the sender's own tile (server-side position)
+  // a bomb lands on the sender's own tile, from the server's position
   const tile = tileOf(player);
 
-  // no bomb on a wall, block, or off the map
+  // no bomb on a wall, on a block, or off the map
   if (
     !room.map.isInsideMap(tile.x, tile.y) ||
     room.map.isWall(tile.x, tile.y) ||
@@ -55,18 +51,18 @@ function placeBomb(socket, player, roomManager) {
     return;
   }
 
-  // no stacking: already a bomb on this tile
+  // no stacking, one bomb per tile
   if (gs.bombs.some((b) => b.x === tile.x && b.y === tile.y)) {
     return;
   }
 
-  // enforce the player's *server-side* bomb capacity
+  // spend one of the player's own bombs, never a number from the client
   const liveCount = gs.bombs.filter((b) => b.ownerId === player.id).length;
   if (liveCount >= player.bombs) {
     return;
   }
 
-  // use the player's *server-side* flame range
+  // range comes from the server's copy of the player, fixed at placement
   const bomb = {
     id: `bomb-${gs.nextId++}`,
     ownerId: player.id,

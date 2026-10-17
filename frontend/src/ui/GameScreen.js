@@ -5,6 +5,8 @@ export default class GameScreen {
     this.onLeave = onLeave || null;
     this.node = render(
       h('section', { id: 'game-screen', class: 'game-screen hidden' }, [
+        // top message, e.g. "You Lose" once our own hearts run out
+        h('div', { id: 'player-status', class: 'player-status hidden' }),
         h('div', { class: 'game-top' }, [
           h('div', { id: 'hud', class: 'hud' }),
           h('div', { class: 'game-top-actions' }, [ // Container l-actions
@@ -33,6 +35,7 @@ export default class GameScreen {
     this.hud = this.node.querySelector('#hud');
     this.chat = this.node.querySelector('#chat');
     this.gameOver = this.node.querySelector('#game-over');
+    this.status = this.node.querySelector('#player-status');
   }
 
   show() {
@@ -41,5 +44,17 @@ export default class GameScreen {
 
   hide() {
     this.node.classList.add('hidden');
+  }
+
+  // show a short message at the very top of the game screen
+  showMessage(text) {
+    this.status.textContent = text;
+    this.status.classList.remove('hidden');
+  }
+
+  // hide the top message again
+  hideMessage() {
+    this.status.textContent = '';
+    this.status.classList.add('hidden');
   }
 }

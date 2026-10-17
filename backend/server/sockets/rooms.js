@@ -1,7 +1,8 @@
 const { send, broadcast, broadcastToRoom } = require('./broadcast');
 const { joinLobby } = require('./lobby');
 const { getPlayerList } = require('./state');
-const { startTicking, finishGame } = require('../game/gameLoop');
+const { startTicking } = require('../game/gameLoop');
+const { finishGame } = require('../game/finish');
 const { playerStats } = require('../game/playerStats');
 
 //get a list of players in a room with their id and nickname

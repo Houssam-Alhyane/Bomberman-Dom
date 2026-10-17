@@ -3,10 +3,8 @@ import { GameState } from './GameState.js';
 import { Performance } from './Performance.js';
 import { Renderer } from './Renderer.js';
 import { BombManager } from '../gameplay/BombManager.js';
-import { Map } from '../world/map/Map.js';
 import { PlayerManager } from '../world/player/PlayerManager.js';
 import { Input } from '../world/player/playerinput.js';
-import { GRID_WIDTH, GRID_HEIGHT } from '../shared/constants.js';
 import { SERVER_EVENTS } from '../shared/events.js';
 
 export class GameEngine {
@@ -20,7 +18,7 @@ export class GameEngine {
     this.wsClient = null;
     this.chatOpen = false;
 
-    // Callbacks set by main.js.
+    // callbacks that main.js sets
     this.onMove = null;
     this.onPlayers = null;
     this.onWinner = null;
@@ -28,6 +26,7 @@ export class GameEngine {
     this._playersKey = '';
     this._finished = false;
     this._offServer = [];
+    this._lastMoveTarget = '';
 
     this.loop = new GameLoop(
       (step) => this.update(step), // gameplay , input , movement
@@ -46,8 +45,9 @@ export class GameEngine {
 
     this._playersKey = '';
     this._finished = false;
+    this._lastMoveTarget = '';
 
-    // Add each player at the next free spawn position.
+    // drop each player at the next free spawn position
     const list = players.length ? players : [{ id: localPlayerId, nickname: 'Player' }];
     for (const p of list) {
       const player = this.players.addPlayer(p.id, p.nickname);
@@ -57,6 +57,7 @@ export class GameEngine {
       }
     }
 
+    // the BombManager draws bombs and relays our placement requests
     this.gameplay = new BombManager();
     this.gameplay.onEvent((fact) => this.wsClient?.send(fact)); // send event to server
     this.listenToServer(); // save listeners event
@@ -64,7 +65,7 @@ export class GameEngine {
     this.renderer = new Renderer(container);
   }
 
-  // update place of player
+  // apply a server position to a remote player
   setPlayerPosition(id, x, y) {
     const player = this.state.players.get(id);
     if (player) {
@@ -73,7 +74,7 @@ export class GameEngine {
     }
   }
 
-  // Listen for gameplay events and player disconnects from the server.
+  // listen for gameplay events and for players leaving
   listenToServer() {
     const gameEvents = [
       SERVER_EVENTS.PLACE_BOMB,
@@ -108,7 +109,7 @@ export class GameEngine {
     this.loop.start();
   }
 
-  // Runs every fixed step (~60 times per second).
+  // runs every fixed step, about 60 times a second
   update(step) {
     this.gameplay?.update(step, this.state, this.state.map);
 
@@ -124,23 +125,25 @@ export class GameEngine {
     const { dx, dy } = this.input.getDirection();
     if (!dx && !dy) return;
 
-    const prevX = player.x;
-    const prevY = player.y;
-    player.movement(dx, dy, this.state.map);
+    // No local movement or collision here: the backend owns the map and
+    // validates every move (sockets/movement.js). We only ask to move; the
+    // position changes when the server broadcasts player_moved back (main.js).
+    const next = player.nextPosition(dx, dy);
+    const target = `${next.x},${next.y}`;
+    if (target === this._lastMoveTarget) return;
 
-    if (player.x !== prevX || player.y !== prevY) {
-      this.onMove?.(player);
-    }
+    this._lastMoveTarget = target;
+    this.onMove?.(next.x, next.y);
   }
 
-  // Draw the current state and notify main.js of any changes.
+  // draw the state and tell main.js what changed
   render() {
     this.notifyPlayers();
     this.notifyWinner();
     this.renderer?.render(this.state);
   }
 
-  // Tell main.js when the player list changes (lives, alive status).
+  // tell main.js when lives or alive flags change
   notifyPlayers() {
     const players = [...this.state.players.values()];
     const key = players.map((p) => `${p.id}:${p.lives}:${p.alive}`).join('|');
@@ -151,14 +154,14 @@ export class GameEngine {
     }
   }
 
-  // Tell main.js once when a winner is decided.
+  // tell main.js once, when a winner is decided
   notifyWinner() {
     if (this._finished || !this.gameplay?.announced) return;
     this._finished = true;
     this.onWinner?.(this.state.winner);
   }
 
-  // Stop everything, remove listeners, and clean up the DOM.
+  // stop everything, drop the listeners and clean up the DOM
   destroy() {
     this.loop.stop();
     this._offServer.forEach((off) => off());
