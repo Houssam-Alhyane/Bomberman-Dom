@@ -7,6 +7,7 @@ import { PlayerManager } from '../world/player/PlayerManager.js';
 import { Input } from '../world/player/playerinput.js';
 import { SERVER_EVENTS } from '../shared/events.js';
 
+// connects the client subsystems and manages the match lifecycle
 export class GameEngine {
   constructor() {
     this.state = new GameState();
@@ -29,41 +30,45 @@ export class GameEngine {
     this._lastMoveTarget = '';
 
     this.loop = new GameLoop(
-      (step) => this.update(step), // gameplay , input , movement
+      (step) => this.update(step),
       () => this.render(),
-      this.performance
+      this.performance,
     );
   }
 
-  init(container, { localPlayerId = 'local', players = [], map = [], wsClient = null } = {}) {
-    this.destroy(); // stop loop , listeners & clean render , 
-    // 
-    
-    t
-    this.state.reset(); // reset state to default value
+  // set up a new match: build the map, spawn players, wire server events
+  init(
+    container,
+    { localPlayerId = 'local', players = [], map = [], wsClient = null } = {},
+  ) {
+    this.destroy();
+    this.state.reset();
     this.state.localPlayerId = localPlayerId;
     if (wsClient) this.wsClient = wsClient;
-
-    this.state.setMap(new Map(GRID_WIDTH, GRID_HEIGHT, map)); // set up the map
+    // The server owns the map and sends only its tiles; the frontend just
+    // renders them. No client-side map/collision, no generation.
+    this.state.setMap(map);
 
     this._playersKey = '';
     this._finished = false;
     this._lastMoveTarget = '';
 
     // drop each player at the next free spawn position
-    const list = players.length ? players : [{ id: localPlayerId, nickname: 'Player' }];
+    const list = players.length
+      ? players
+      : [{ id: localPlayerId, nickname: 'Player' }];
     for (const p of list) {
       const player = this.players.addPlayer(p.id, p.nickname);
       if (player) {
         if (p) player.setStats(p);
-        this.state.players.set(p.id, player); // save player to state
+        this.state.players.set(p.id, player);
       }
     }
 
     // the BombManager draws bombs and relays our placement requests
     this.gameplay = new BombManager();
-    this.gameplay.onEvent((fact) => this.wsClient?.send(fact)); // send event to server
-    this.listenToServer(); // save listeners event
+    this.gameplay.onEvent((fact) => this.wsClient?.send(fact));
+    this.listenToServer();
 
     this.renderer = new Renderer(container);
   }
@@ -90,21 +95,18 @@ export class GameEngine {
     ];
 
     this._offServer = gameEvents
-    .map(type =>
-        this.wsClient?.on(type, msg => // catch the msg event from server
-            this.gameplay?.applyRemote(msg, this.state) // apply the new event to state
-        )
-    )
-    .filter(Boolean); // remove all falsy event
+      .map((type) =>
+        this.wsClient?.on(type, (msg) =>
+          this.gameplay?.applyRemote(msg, this.state),
+        ),
+      )
+      .filter(Boolean);
 
-   const offLeft = this.wsClient?.on( // catch event player left
-    SERVER_EVENTS.PLAYER_LEFT,
-    msg => {
-        if (msg.playerId !== this.state.localPlayerId) { // if player left 
-            this.state.players.delete(msg.playerId); // delete from state
-        }
-    }
-);
+    const offLeft = this.wsClient?.on(SERVER_EVENTS.PLAYER_LEFT, (msg) => {
+      if (msg.playerId !== this.state.localPlayerId) {
+        this.state.players.delete(msg.playerId);
+      }
+    });
     if (offLeft) this._offServer.push(offLeft);
   }
 
