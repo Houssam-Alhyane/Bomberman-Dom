@@ -3,10 +3,8 @@ import { GameState } from './GameState.js';
 import { Performance } from './Performance.js';
 import { Renderer } from './Renderer.js';
 import { BombManager } from '../gameplay/BombManager.js';
-import { Map } from '../world/map/Map.js';
 import { PlayerManager } from '../world/player/PlayerManager.js';
 import { Input } from '../world/player/playerinput.js';
-import { GRID_WIDTH, GRID_HEIGHT } from '../shared/constants.js';
 import { SERVER_EVENTS } from '../shared/events.js';
 
 // connects the client subsystems and manages the match lifecycle
@@ -29,6 +27,7 @@ export class GameEngine {
     this._playersKey = '';
     this._finished = false;
     this._offServer = [];
+    this._lastMoveTarget = '';
 
     this.loop = new GameLoop(
       (step) => this.update(step),
@@ -43,11 +42,13 @@ export class GameEngine {
     this.state.reset();
     this.state.localPlayerId = localPlayerId;
     if (wsClient) this.wsClient = wsClient;
-
-    this.state.setMap(new Map(GRID_WIDTH, GRID_HEIGHT, map));
+    // The server owns the map and sends only its tiles; the frontend just
+    // renders them. No client-side map/collision, no generation.
+    this.state.setMap(map);
 
     this._playersKey = '';
     this._finished = false;
+    this._lastMoveTarget = '';
 
     // drop each player at the next free spawn position
     const list = players.length ? players : [{ id: localPlayerId, nickname: 'Player' }];
@@ -120,13 +121,15 @@ export class GameEngine {
     const { dx, dy } = this.input.getDirection();
     if (!dx && !dy) return;
 
-    const prevX = player.x;
-    const prevY = player.y;
-    player.movement(dx, dy, this.state.map);
+    // No local movement or collision here: the backend owns the map and
+    // validates every move (sockets/movement.js). We only ask to move; the
+    // position changes when the server broadcasts player_moved back (main.js).
+    const next = player.nextPosition(dx, dy);
+    const target = `${next.x},${next.y}`;
+    if (target === this._lastMoveTarget) return;
 
-    if (player.x !== prevX || player.y !== prevY) {
-      this.onMove?.(player);
-    }
+    this._lastMoveTarget = target;
+    this.onMove?.(next.x, next.y);
   }
 
   // draw the state and tell main.js what changed

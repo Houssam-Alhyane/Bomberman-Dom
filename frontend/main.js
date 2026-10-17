@@ -96,8 +96,8 @@ globalChat = new Chat({
   onError: (text) => globalChatBox.setError(text),
 });
 
-// Local moves go to the server; remote moves are bound per match in startMatch.
-engine.onMove = (player) => client.send({ type: 'move', x: player.x, y: player.y });
+
+engine.onMove = (x, y) => client.send({ type: 'move', x, y });
 // Lives and alive flags change while the match runs.
 engine.onPlayers = (players) => {
   hud.update({ players });
@@ -148,11 +148,11 @@ function startMatch(msg) {
   });
   engine.start();
 
-  // Remote moves only matter while this match is live, so bind them per match.
-  // Our own move comes back too, so we ignore it to avoid rubber-banding.
+  // The server is the single source of truth for position: apply every
+  // player_moved, including our own, so we only ever render accepted moves.
   matchHandlers.push(
     client.on(SERVER_EVENTS.PLAYER_MOVED, (m) => {
-      if (m.playerId !== me.id) engine.setPlayerPosition(m.playerId, m.x, m.y);
+      engine.setPlayerPosition(m.playerId, m.x, m.y);
     })
   );
 

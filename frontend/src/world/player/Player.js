@@ -37,15 +37,13 @@ export class Player {
 
     // dx = 1 == -> && dx = -1 === <-
     // dy = 1 == ^ && dy = - 1  === |
-    movement(dx, dy, map) {
-        const newX = this.x + dx * this.speed
-        const newY = this.y + dy * this.speed
-        if (map.canMoveTo(newX, newY)) {
-            this.x = newX;
-            this.y = newY;
+    // Propose the next position only. There is no collision here: the backend
+    // owns the map and decides whether the move is legal.
+    nextPosition(dx, dy) {
+        return {
+            x: this.x + dx * this.speed,
+            y: this.y + dy * this.speed,
         }
-
-
     }
 
 }
