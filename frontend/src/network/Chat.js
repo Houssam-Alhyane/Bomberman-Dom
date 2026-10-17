@@ -5,8 +5,7 @@ const MAX_MESSAGE_LENGTH = 200;
 const HISTORY_LIMIT = 100;
 
 //chat step: validates outgoing messages, keeps a short history of the room, and
-//reports each message through onMessage. no DOM, no rendering - the UI owns that.
-//the channel picks which chat we are: room chat (default) or global chat.
+
 export default class Chat {
   constructor({ client, onMessage, onError, channel = SERVER_EVENTS.CHAT, locked = true } = {}) {
     this.client = client;
