@@ -9,7 +9,6 @@ import { Input } from '../world/player/playerinput.js';
 import { GRID_WIDTH, GRID_HEIGHT } from '../shared/constants.js';
 import { SERVER_EVENTS } from '../shared/events.js';
 
-// The game engine connects all subsystems and manages the match lifecycle.
 export class GameEngine {
   constructor() {
     this.state = new GameState();
@@ -31,20 +30,19 @@ export class GameEngine {
     this._offServer = [];
 
     this.loop = new GameLoop(
-      (step) => this.update(step),
+      (step) => this.update(step), // gameplay , input , movement
       () => this.render(),
       this.performance
     );
   }
 
-  // Set up a new match: build the map, spawn players, wire server events.
   init(container, { localPlayerId = 'local', players = [], map = [], wsClient = null } = {}) {
-    this.destroy();
-    this.state.reset();
+    this.destroy(); // stop loop , listeners & clean render , input
+    this.state.reset(); // reset state to default value
     this.state.localPlayerId = localPlayerId;
     if (wsClient) this.wsClient = wsClient;
 
-    this.state.setMap(new Map(GRID_WIDTH, GRID_HEIGHT, map));
+    this.state.setMap(new Map(GRID_WIDTH, GRID_HEIGHT, map)); // set up the map
 
     this._playersKey = '';
     this._finished = false;
@@ -55,19 +53,18 @@ export class GameEngine {
       const player = this.players.addPlayer(p.id, p.nickname);
       if (player) {
         if (p) player.setStats(p);
-        this.state.players.set(p.id, player);
+        this.state.players.set(p.id, player); // save player to state
       }
     }
 
-    // BombManager handles bomb display and relays placement requests.
     this.gameplay = new BombManager();
-    this.gameplay.onEvent((fact) => this.wsClient?.send(fact));
-    this.listenToServer();
+    this.gameplay.onEvent((fact) => this.wsClient?.send(fact)); // send event to server
+    this.listenToServer(); // save listeners event
 
     this.renderer = new Renderer(container);
   }
 
-  // Apply a server-authoritative position for a remote player.
+  // update place of player
   setPlayerPosition(id, x, y) {
     const player = this.state.players.get(id);
     if (player) {
@@ -89,14 +86,21 @@ export class GameEngine {
     ];
 
     this._offServer = gameEvents
-      .map((type) => this.wsClient?.on(type, (msg) => this.gameplay?.applyRemote(msg, this.state)))
-      .filter(Boolean);
+    .map(type =>
+        this.wsClient?.on(type, msg => // catch the msg event from server
+            this.gameplay?.applyRemote(msg, this.state) // apply the new event to state
+        )
+    )
+    .filter(Boolean); // remove all falsy event
 
-    const offLeft = this.wsClient?.on(SERVER_EVENTS.PLAYER_LEFT, (msg) => {
-      if (msg.playerId !== this.state.localPlayerId) {
-        this.state.players.delete(msg.playerId);
-      }
-    });
+   const offLeft = this.wsClient?.on( // catch event player left
+    SERVER_EVENTS.PLAYER_LEFT,
+    msg => {
+        if (msg.playerId !== this.state.localPlayerId) { // if player left 
+            this.state.players.delete(msg.playerId); // delete from state
+        }
+    }
+);
     if (offLeft) this._offServer.push(offLeft);
   }
 

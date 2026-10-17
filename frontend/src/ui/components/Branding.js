@@ -1,7 +1,5 @@
 import { h } from '../../../framework/src/index.js';
 
-// The three bobbing bombs and the game title sit at the top of both the
-// nickname screen and the lobby, so their markup lives here once.
 const MASCOTS = ['💣', '💣', '💣'];
 
 export function renderMascots() {
