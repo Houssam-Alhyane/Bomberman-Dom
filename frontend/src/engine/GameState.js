@@ -13,9 +13,18 @@ export class GameState {
     this.winner = null;
   }
 
-  // keep the map the server sent us
+  // keep the map the server sent us, normalised to { width, height, tiles }
+  // so the board can be sized from the server's own dimensions
   setMap(map) {
-    this.map = map;
+    if (Array.isArray(map)) {
+      this.map = {
+        width: map.reduce((w, t) => Math.max(w, t.x + 1), 0),
+        height: map.reduce((h, t) => Math.max(h, t.y + 1), 0),
+        tiles: map,
+      };
+    } else {
+      this.map = map;
+    }
   }
 
   // wipe everything when we leave or start a new match
