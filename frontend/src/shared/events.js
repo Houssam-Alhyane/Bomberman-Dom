@@ -13,7 +13,6 @@ export const CLIENT_EVENTS = {
 
 //message types received from the server, values must match backend broadcast payloads
 export const SERVER_EVENTS = {
-  CONNECTED: 'connected',
   JOINED: 'joined',
   ERROR: 'error',
   ROOMS_LIST: 'rooms_list',

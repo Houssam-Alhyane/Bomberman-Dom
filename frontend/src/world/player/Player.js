@@ -1,5 +1,3 @@
-import { Map } from "../map/Map.js"
-
 export class Player {
     // stats are private so a console script cannot overwrite them
     #lives = 3

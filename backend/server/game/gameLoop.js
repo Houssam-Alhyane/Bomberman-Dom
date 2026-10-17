@@ -4,7 +4,7 @@ const ticking = require('./ticking');
 const { advanceBombs, detonate } = require('./detonation');
 const { advanceExplosions } = require('./explosions');
 const { collectPowerUps } = require('./powerUps');
-const { checkWinner, finishGame } = require('./finish');
+const { checkWinner } = require('./finish');
 
 //one step: advance bombs, resolve blasts, age flames, collect, then check result
 function tick(room, broadcast) {
@@ -32,5 +32,4 @@ function startTicking(room, broadcast) {
 module.exports = {
   startTicking,
   stopTicking: ticking.stopTicking,
-  finishGame,
 };

@@ -2,10 +2,6 @@ const { send, broadcastToRoom } = require('./broadcast');
 const { tileOf } = require('../game/grid');
 const { BOMB_TIMER } = require('../game/config');
 
-function isValidNumber(value) {
-  return typeof value === 'number' && Number.isFinite(value);
-}
-
 // resolve the sender's room or report why not
 function roomFor(socket, player, roomManager) {
   if (!player.nickname) {

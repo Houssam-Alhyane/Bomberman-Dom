@@ -12,15 +12,13 @@ function endMatch(room, winnerId, broadcast) {
   stopTicking(room);
 }
 
-// End the match immediately and tell the room who won.
-// Called when players disconnect mid-match: pick the winner from alive players,
-// not from everyone still in the room (dead players may not have left yet).
+//finish the game if the room has a game state and it is not already finished
 function finishGame(room, broadcast) {
   const gs = room.gameState;
   if (!gs || gs.finished) return;
 
   const alive = room.players.filter((p) => p.alive);
-
+  // if there is one or zero survivors, the match is over
   endMatch(room, alive.length === 1 ? alive[0].id : null, broadcast);
 }
 
@@ -31,7 +29,7 @@ function checkWinner(room, broadcast) {
 
   const alive = room.players.filter((player) => player.alive);
   if (alive.length > 1) return;
-
+  // if there is one or zero survivors, the match is over
   endMatch(room, alive.length === 1 ? alive[0].id : null, broadcast);
 }
 

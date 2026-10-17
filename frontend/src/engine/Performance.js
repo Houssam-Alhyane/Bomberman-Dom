@@ -23,8 +23,4 @@ export class Performance {
       this._lastSample = now;
     }
   }
-
-  getStats() {
-    return { fps: this.fps, frameTime: this.frameTime };
-  }
 }
