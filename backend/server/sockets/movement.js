@@ -2,6 +2,9 @@
 
 const { send, broadcastToRoom } = require('./broadcast');
 
+// biggest single step we accept, anything larger is treated as a teleport
+const MAX_STEP = 25;
+
 
 function resync(socket, player) {
     send(socket, {
@@ -26,7 +29,7 @@ function move(socket, player, roomManager, msg) {
 
     const dx = msg.x - player.x;
     const dy = msg.y - player.y;
-    const step = player.speed;
+    const step = MAX_STEP;
 
     if ((dx === 0 && dy === 0) || Math.abs(dx) > step || Math.abs(dy) > step) {
         resync(socket, player);
