@@ -239,19 +239,3 @@ Every message is JSON with a `type` field. Client message types must match
 | `game_over`         | Match decided (`winnerId`, or `null`)       |
 | `chat` / `global_chat` | Chat messages                            |
 
-## Tests
-
-The backend ships with Node scripts that exercise the authoritative logic
-(static checks, real WebSocket round-trips, movement authority, and security).
-Run them from the `backend` directory:
-
-```bash
-cd backend
-node test/audit.test.js        # full project audit (static + runtime + manual)
-node test/game-audit.test.js   # rules: lives, damage, blocks, power-ups, winner
-node test/movement.test.js     # anti-cheat: teleport / speed limits
-node test/security.test.js     # server-authoritative security checks
-```
-
-_(These are plain `assert`-based scripts, not a test runner; each file prints its
-own results.)_
