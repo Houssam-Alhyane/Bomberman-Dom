@@ -1,11 +1,10 @@
-// the client's copy of the state, drawing only, the server is the truth
-
+// Holds all game data for display (the server is the source of truth).
 export class GameState {
   constructor() {
     this.localPlayerId = null;
     this.map = null;
 
-    // everything currently on the board
+    // Active entities on the board
     this.players = new Map();
     this.bombs = [];
     this.explosions = [];
@@ -13,8 +12,7 @@ export class GameState {
     this.winner = null;
   }
 
-  // keep the map the server sent us, normalised to { width, height, tiles }
-  // so the board can be sized from the server's own dimensions
+  // Save the map sent by the server: { width, height, tiles }
   setMap(map) {
     if (Array.isArray(map)) {
       this.map = {
@@ -27,7 +25,7 @@ export class GameState {
     }
   }
 
-  // wipe everything when we leave or start a new match
+  // Reset all state when leaving or restarting a match
   reset() {
     this.localPlayerId = null;
     this.map = null;

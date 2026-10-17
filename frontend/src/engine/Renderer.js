@@ -1,24 +1,25 @@
 import { h, render, patch } from '../../framework/src/index.js';
 import { TILE_SIZE, PLAYER_SIZE } from '../world/map/Map.js';
 
+// Classic Bomberman player colors
 const PLAYER_COLORS = ['#e53935', '#1e88e5', '#43a047', '#fdd835'];
 
-// Renders the game board using the mini-framework's virtual DOM.
+// Renders the board and entities using the virtual DOM mini-framework.
 export class Renderer {
   constructor(container) {
     this.container = container;
     this.vnode = null;
     this.domNode = null;
 
-    // Tile vnodes are cached because they only change when a block breaks.
+    // Cache tile vnodes (tiles only change when a block is destroyed)
     this._tileVNodes = null;
     this._tileCount = null;
 
-    // Direct DOM refs for player elements so translate3d skips the vdom.
+    // Direct DOM references for players to animate smoothly via translate3d
     this._playerEls = new Map();
   }
 
-  // Render or patch the game board, then update player positions directly.
+  // Render or patch the board, then update player positions
   render(state) {
     const newVNode = this.buildBoard(state);
 
@@ -29,9 +30,9 @@ export class Renderer {
     this.updatePlayerPositions(state.players);
   }
 
-  // Build the full vdom tree for the board and all entities.
+  // Build the virtual DOM tree for the board, tiles, items, and players
   buildBoard(state) {
-    // `state.map` is the server's map: { width, height, tiles }.
+    // Rebuild tiles only if block count changed
     if (!this._tileVNodes || this._tileCount !== state.map.tiles.length) {
       this._tileVNodes = state.map.tiles.map((t) =>
         this.tile(`tile-${t.x}-${t.y}`, `tile ${t.type}`, t.x, t.y)
@@ -58,7 +59,7 @@ export class Renderer {
     );
   }
 
-  // Create a vnode for a grid-positioned entity (tile, bomb, explosion, powerup).
+  // Helper to create a grid-positioned vnode (tile, bomb, explosion, powerup)
   tile(key, className, gridX, gridY) {
     return h('div', {
       key,
@@ -67,7 +68,7 @@ export class Renderer {
     });
   }
 
-  // Build player vnodes — position is set via translate3d after the patch.
+  // Build player vnodes (position is applied directly via translate3d)
   buildPlayers(players, localId) {
     return Array.from(players.values()).map((player, index) => {
       const classes = `player ${!player.alive || player.lives <= 0 ? 'dead' : ''} ${player.id === localId ? 'local' : ''}`.trim();
@@ -80,12 +81,13 @@ export class Renderer {
     });
   }
 
-  // Set player positions directly on the DOM to keep movement smooth.
+  // Update player positions directly in DOM for smooth 60fps movement
   updatePlayerPositions(players) {
     for (const [id, player] of players) {
       const key = String(id);
       let el = this._playerEls.get(key);
 
+      // Re-find element if board was re-rendered
       if (!el || !el.isConnected) {
         el = this.domNode?.querySelector(`[data-pid="${key}"]`);
         if (el) this._playerEls.set(key, el);
@@ -95,7 +97,7 @@ export class Renderer {
     }
   }
 
-  // Remove the board from the DOM and clear all cached state.
+  // Remove board from DOM and reset cached nodes
   destroy() {
     if (this.domNode) {
       this.domNode.remove();
