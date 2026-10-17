@@ -1,6 +1,5 @@
 import { h, render, patch } from '../../framework/src/index.js';
 import { TILE_SIZE, PLAYER_SIZE } from '../world/map/Map.js';
-import { GRID_WIDTH, GRID_HEIGHT } from '../shared/constants.js';
 
 const PLAYER_COLORS = ['#e53935', '#1e88e5', '#43a047', '#fdd835'];
 
@@ -32,13 +31,12 @@ export class Renderer {
 
   // Build the full vdom tree for the board and all entities.
   buildBoard(state) {
-    // `state.map` is the server's tile array.
-    const tiles = state.map ?? [];
-    if (!this._tileVNodes || this._tileCount !== tiles.length) {
-      this._tileVNodes = tiles.map((t) =>
+    // `state.map` is the server's map: { width, height, tiles }.
+    if (!this._tileVNodes || this._tileCount !== state.map.tiles.length) {
+      this._tileVNodes = state.map.tiles.map((t) =>
         this.tile(`tile-${t.x}-${t.y}`, `tile ${t.type}`, t.x, t.y)
       );
-      this._tileCount = tiles.length;
+      this._tileCount = state.map.tiles.length;
     }
 
     return h(
@@ -46,7 +44,7 @@ export class Renderer {
       {
         id: 'game-board',
         key: 'board',
-        style: `width:${GRID_WIDTH * TILE_SIZE}px;height:${GRID_HEIGHT * TILE_SIZE}px;`,
+        style: `width:${state.map.width * TILE_SIZE}px;height:${state.map.height * TILE_SIZE}px;`,
       },
       [
         ...this._tileVNodes,

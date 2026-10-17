@@ -87,7 +87,7 @@ export class BombManager {
     // a block went away, remove it from our copy of the map
     if (event.type === 'block_destroyed') {
       if (state.map) {
-        state.map = state.map.filter(
+        state.map.tiles = state.map.tiles.filter(
           (t) => !(t.type === 'block' && t.x === event.x && t.y === event.y),
         );
       }
