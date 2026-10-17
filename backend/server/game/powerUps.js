@@ -1,10 +1,9 @@
-// Power-up collection: a living player standing on an item picks it up, the
-// stat grows, and the room is told about the new values.
+// a living player standing on an item picks it up and grows a stat
 
 const { isCovered } = require('./grid');
 const { applyPowerUp, playerStats } = require('./playerStats');
 
-//hand every unclaimed item to the first living player standing on it
+// hand every unclaimed item to the first living player standing on it
 function collectPowerUps(room, broadcast) {
   const gs = room.gameState;
 
@@ -22,8 +21,7 @@ function collectPowerUps(room, broadcast) {
         x: powerUp.x,
         y: powerUp.y,
         powerUpType: powerUp.type,
-        // send updated stats so client stays in sync
-        stats: playerStats(player),
+        stats: playerStats(player), // send the new stats so the client stays in sync
       });
 
       break; // one player per item

@@ -1,9 +1,11 @@
+// the client's copy of the state, drawing only, the server is the truth
+
 export class GameState {
   constructor() {
     this.localPlayerId = null;
     this.map = null;
 
-    // Active entities.
+    // everything currently on the board
     this.players = new Map();
     this.bombs = [];
     this.explosions = [];
@@ -11,12 +13,12 @@ export class GameState {
     this.winner = null;
   }
 
-  // Store the active map instance.
+  // keep the map the server sent us
   setMap(map) {
     this.map = map;
   }
 
-  // Reset all state when leaving or restarting a match.
+  // wipe everything when we leave or start a new match
   reset() {
     this.localPlayerId = null;
     this.map = null;

@@ -1,5 +1,6 @@
 import { h, render, patch } from '../../framework/src/index.js';
 
+// the box that shows when the match is over
 export default class GameOverScreen {
   constructor(container, { onLeave } = {}) {
     this.container = container;
@@ -8,17 +9,20 @@ export default class GameOverScreen {
     this.node = null;
     this.winner = null;
   }
-  // show game over box with winner name
+
+  // remember the winner, draw the box and show it
   show(winner = null) {
     this.winner = winner;
     this.render();
     this.container.classList.remove('hidden');
   }
-  // hide game over screen
+
+  // hide the box again
   hide() {
     this.container.classList.add('hidden');
   }
 
+  // draw the box, naming the winner or just saying the match finished
   render() {
     const next = h('div', { class: 'game-over-box' }, [
       h('h2', { class: 'game-over-title' }, ['Game Over']),
@@ -31,7 +35,7 @@ export default class GameOverScreen {
         ['Back to lobby']
       ),
     ]);
-    // if vnode exist make patch , if not render
+    // patch when we already drew once, otherwise render fresh
     this.node = this.old ? patch(this.old, next, this.node) : render(next, this.container);
     this.old = next;
   }
