@@ -99,7 +99,13 @@ globalChat = new Chat({
 // Local moves go to the server; remote moves are bound per match in startMatch.
 engine.onMove = (player) => client.send({ type: 'move', x: player.x, y: player.y });
 // Lives and alive flags change while the match runs.
-engine.onPlayers = (players) => hud.update({ players });
+engine.onPlayers = (players) => {
+  hud.update({ players });
+
+  // our own hearts ran out: say so at the top of the screen
+  const local = players.find((p) => p.id === me.id);
+  if (local && local.lives <= 0) gameScreen.showMessage('You Lose');
+};
 // The engine tells us once when the match is decided.
 engine.onWinner = (winnerId) => {
   const winner = engine.state.players.get(winnerId);
@@ -127,6 +133,7 @@ function startMatch(msg) {
   globalChatBox.close();
   lobby.hide();
   nickname.hide();
+  gameScreen.hideMessage();
   gameScreen.show();
 
   chat.setSelfId(me.id);
@@ -171,6 +178,7 @@ function teardownMatch() {
   chat.clear();
   chatBox.close();
   gameOver.hide();
+  gameScreen.hideMessage();
   gameScreen.hide();
 }
 
