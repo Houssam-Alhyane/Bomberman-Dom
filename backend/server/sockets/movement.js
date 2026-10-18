@@ -6,7 +6,6 @@ const MAX_STEP = 25;
 function resync(socket, player) {
   send(socket, {
     type: 'error',
-    message: 'Invalid move',
     x: player.x,
     y: player.y,
   });
