@@ -75,7 +75,7 @@ function handleMessage(socket, wss, msg) {
       return;
 
     case 'move':
-      move(socket, player, roomManager, msg);
+      move(player, roomManager, msg);
       return;
 
     case 'place_bomb':

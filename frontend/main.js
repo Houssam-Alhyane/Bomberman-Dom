@@ -99,7 +99,7 @@ globalChat = new Chat({
 });
 
 
-engine.onMove = (x, y) => client.send({ type: 'move', x, y });
+engine.onMove = (dx, dy) => client.send({ type: 'move', dx, dy });
 // Lives and alive flags change while the match runs.
 engine.onPlayers = (players) => {
   hud.update({ players });

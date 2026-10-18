@@ -130,17 +130,11 @@ export class GameEngine {
       this.gameplay?.placeBomb(player, this.state);
     }
 
-    // Check movement keys (arrows / WASD)
+    // Send direction to server (server computes new position)
     const { dx, dy } = this.input.getDirection();
     if (!dx && !dy) return;
 
-    // Send intended move to server (prevents sending duplicate coordinates)
-    const next = player.nextPosition(dx, dy);
-    const target = `${next.x},${next.y}`;
-    if (target === this._lastMoveTarget) return;
-
-    this._lastMoveTarget = target;
-    this.onMove?.(next.x, next.y);
+    this.onMove?.(dx, dy);
   }
 
   // Draw board and notify UI callbacks

@@ -1,45 +1,35 @@
-const { send, broadcastToRoom } = require('./broadcast');
+const { broadcastToRoom } = require('./broadcast');
 
-// biggest single step we accept, anything larger is treated as a teleport
-const MAX_STEP = 25;
 
-function resync(socket, player) {
-  send(socket, {
-    type: 'error',
-    message: 'Invalid move',
-    x: player.x,
-    y: player.y,
-  });
-}
-
-function move(socket, player, roomManager, msg) {
+function move(player, roomManager, msg) {
   const room = roomManager.getRoom(player.roomId);
 
   if (!room || room.state !== 'playing' || !player.alive) {
     return;
   }
 
-  if (!Number.isFinite(msg.x) || !Number.isFinite(msg.y)) {
-    resync(socket, player);
+  const dx = msg.dx;
+  const dy = msg.dy;
+
+  // only accept -1, 0, or 1 for each axis
+  if (![-1, 0, 1].includes(dx) || ![-1, 0, 1].includes(dy)) {
     return;
   }
 
-  const dx = msg.x - player.x;
-  const dy = msg.y - player.y;
-  const step = MAX_STEP;
-
-  if ((dx === 0 && dy === 0) || Math.abs(dx) > step || Math.abs(dy) > step) {
-    resync(socket, player);
+  // must move in exactly one direction
+  if (dx === 0 && dy === 0) {
     return;
   }
 
-  if (!room.map.canMoveTo(msg.x, msg.y)) {
-    resync(socket, player);
+  const newX = player.x + dx * player.speed;
+  const newY = player.y + dy * player.speed;
+
+  if (!room.map.canMoveTo(newX, newY)) {
     return;
   }
 
-  player.x = msg.x;
-  player.y = msg.y;
+  player.x = newX;
+  player.y = newY;
 
   broadcastToRoom(room, {
     type: 'player_moved',
