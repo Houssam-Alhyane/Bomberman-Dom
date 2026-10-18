@@ -93,7 +93,7 @@ export default class Rooms {
   // Room errors (host/join/leave) happen while we are not in a room, so those
 
   onError(msg) {
-    const message = msg?.message || 'Something went wrong';
+    const message = msg?.message;
 
     if (this.room) {
       this.onErrorHandler?.(message);
