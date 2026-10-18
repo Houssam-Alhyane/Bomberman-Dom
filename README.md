@@ -46,7 +46,7 @@ No bundler, transpiler, or framework dependencies are used on the frontend.
 ## Project Structure
 
 ```
-Bomberman-Dom/
+bomberman-dom/
 ├── backend/
 │   ├── server/
 │   │   ├── server.js            # HTTP + WebSocket server (port 8080)
@@ -56,6 +56,7 @@ Bomberman-Dom/
 │   │   │   ├── grid.js          # tile/occupancy/spatial helpers
 │   │   │   ├── gameState.js     # per-room state + id generator
 │   │   │   ├── gameLoop.js      # one tick: bombs → blasts → flames → pickups → result
+│   │   │   ├── ticking.js       # drives each room's fixed-rate interval
 │   │   │   ├── detonation.js    # bomb timing, explosions, block drops, damage
 │   │   │   ├── explosions.js    # flame lifetime
 │   │   │   ├── powerUps.js      # pickups + stat growth
@@ -69,25 +70,27 @@ Bomberman-Dom/
 │   │       ├── handlers.js      # routes each client message type
 │   │       ├── state.js         # connected players
 │   │       ├── rooms.js         # create/join/leave room
-│   │       ├── lobby.js         # nickname validation for joining
+│   │       ├── nickname.js      # nickname format rules
+│   │       ├── lobby.js         # nickname uniqueness when joining
 │   │       ├── movement.js      # move validation (anti-cheat)
 │   │       ├── bombs.js         # bomb placement validation
 │   │       ├── chat.js          # room + global chat
 │   │       ├── broadcast.js     # send / broadcast / broadcastToRoom
 │   │       └── heartbeat.js     # ping/pong keep-alive, terminates dead sockets
-│   └── test/                    # Node test scripts (see "Tests")
 └── frontend/
     ├── index.html
     ├── main.js                  # wires everything together
     ├── framework/src/           # mini VDOM: h / render / patch / State
     ├── src/
-    │   ├── engine/              # GameEngine, GameLoop, Renderer, state
+    │   ├── engine/              # GameEngine, GameLoop, GameState, Renderer
     │   ├── gameplay/            # Bomb, BombManager, Explosion, PowerUp
-    │   ├── world/               # Map, Player, PlayerManager, input
+    │   ├── world/
+    │   │   ├── map/             # Map + grid helpers
+    │   │   └── player/          # Player, PlayerManager, keyboard input
     │   ├── network/             # WebSocketClient, Lobby, Rooms, Chat
-    │   ├── ui/                  # screens, HUD, chat box, components
+    │   ├── ui/                  # screens, HUD, GameOver + components/
     │   └── shared/              # constants + event names
-    └── styles/                  # reset.css, lobby.css, game.css
+    └── styles/                  # reset.css, lobby.css, game.css, footer.css
 ```
 
 ## Getting Started
@@ -104,7 +107,8 @@ npm start          # → ws://localhost:8080
 ```
 
 The backend only speaks WebSocket. Visiting `http://localhost:8080` returns a
-plain-text "Bomberman backend is running" message — that is expected.
+plain-text "Bomberman backend is running (WebSocket only)" message — that is
+expected.
 
 ### 2. Start the frontend
 
@@ -131,7 +135,7 @@ different backend, append `?ws=ws://host:port` to the page URL, e.g.
 
 | Action     | Keys                          |
 | ---------- | ----------------------------- |
-| Move       | Arrow keys **or** `W` `A` `S` `D` |
+| Move       | Arrow keys                    |
 | Drop a bomb| `Space`                       |
 
 - Matches need **2 players**, up to **4**.
@@ -187,12 +191,11 @@ Browser (A)                Node.js server                 Browser (B)
 
 ### Anti-cheat measures
 
-Even though the client predicts its own movement, the server re-checks every
-message and rejects invalid ones:
+The client only asks to act; the server re-checks every message and rejects
+invalid ones:
 
-- A single move larger than `MAX_STEP` (25 px) is rejected as a teleport.
-- Movement is metered with a **token bucket** (`BASE_SPEED` px/s × player speed,
-  with a small burst budget for lag), so a client cannot move faster than allowed.
+- A single move larger than `MAX_STEP` (25 px) is rejected as a teleport, and
+  every move is re-checked against the server's map before it is accepted.
 - Bombs are placed using the **server's** copy of the player's position, range,
   and bomb count — never numbers sent by the client.
 - Damage, power-up pickups, and the winner are computed solely on the server.
@@ -200,8 +203,9 @@ message and rejects invalid ones:
 ## WebSocket Protocol
 
 Every message is JSON with a `type` field. Client message types must match
-`backend/server/sockets/handlers.js`; server types must match
-`frontend/src/shared/events.js`.
+`backend/server/sockets/handlers.js` and server game message types must match
+`frontend/src/shared/events.js` (the `connected` handshake is handled separately
+by `WebSocketClient`).
 
 ### Client → Server
 
