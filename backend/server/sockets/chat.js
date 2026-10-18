@@ -1,7 +1,17 @@
 const { send, broadcast, broadcastToRoom } = require('./broadcast');
 
 const MAX_MESSAGE_LENGTH = 200;
+const CHAT_DELAY_MS = 300;
 
+// true when the player sent a message less than 300 ms ago
+function chatTooFast(player) {
+  const now = Date.now();
+  //check if the player has sent a message in the last 300 ms
+  if (now - (player.lastChatAt || 0) < CHAT_DELAY_MS) return true;
+
+  player.lastChatAt = now;
+  return false;
+}
 
 function validateMessage(message) {
   if (typeof message !== 'string') {
@@ -53,7 +63,10 @@ function chat(socket, player, roomManager, message) {
 
   //chat stays closed until the room's game is actually running
   if (room.state !== 'playing') {
-    send(socket, { type: 'error', message: 'Chat unlocks when the game starts' });
+    send(socket, {
+      type: 'error',
+      message: 'Chat unlocks when the game starts',
+    });
     return;
   }
 
@@ -61,6 +74,14 @@ function chat(socket, player, roomManager, message) {
 
   if (!result.success) {
     send(socket, { type: 'error', message: result.message });
+    return;
+  }
+
+  if (chatTooFast(player)) {
+    send(socket, {
+      type: 'error',
+      message: 'You are sending messages too fast',
+    });
     return;
   }
 
@@ -84,6 +105,14 @@ function globalChat(socket, player, wss, message) {
 
   if (!result.success) {
     send(socket, { type: 'error', message: result.message });
+    return;
+  }
+
+  if (chatTooFast(player)) {
+    send(socket, {
+      type: 'error',
+      message: 'You are sending messages too fast',
+    });
     return;
   }
 
