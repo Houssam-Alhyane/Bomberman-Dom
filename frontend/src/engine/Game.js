@@ -27,7 +27,6 @@ export class GameEngine {
     this._playersKey = '';
     this._finished = false;
     this._offServer = [];
-    this._lastMoveTarget = '';
 
     // The game loop calls update() at 60fps and render() each frame
     this.loop = new GameLoop(
@@ -51,7 +50,6 @@ export class GameEngine {
 
     this._playersKey = '';
     this._finished = false;
-    this._lastMoveTarget = '';
 
     // Add each player at their spawn position
     const list = players.length

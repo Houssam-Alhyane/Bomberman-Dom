@@ -34,16 +34,4 @@ export class Player {
         if (stats.bombs !== undefined) this.#bombs = stats.bombs
         if (stats.flameRange !== undefined) this.#flameRange = stats.flameRange
     }
-
-    // dx = 1 == -> && dx = -1 === <-
-    // dy = 1 == ^ && dy = - 1  === |
-    // Propose the next position only. There is no collision here: the backend
-    // owns the map and decides whether the move is legal.
-    nextPosition(dx, dy) {
-        return {
-            x: this.x + dx * this.speed,
-            y: this.y + dy * this.speed,
-        }
-    }
-
 }
